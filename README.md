@@ -3,7 +3,7 @@
 
 ## 1. Pinpoint Music Venues
 
-This app idea would incorporate using some web scraper/api to get data for Music Venues around your geographical area and time period. The Music Venues can be categorized with price, genre, artists, etc. This should allow users to be able to find more less-known artists. Can also suggest venues based on past preferences. 
+This app idea would incorporate using some web scraper/api to get data for Music Venues around your geographical area in a selected time period. The Music Venues can be categorized with price, genre, artists, etc. This should allow users to be able to find more less-known artists, at a lower price-point. Can also suggest venues and artists based on past preferences. 
 
 ## 2. Music Sharing Platform
 
