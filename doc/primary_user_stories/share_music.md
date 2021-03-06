@@ -9,4 +9,4 @@ with. You'll be prompted to choose to share the song publicly or privately; if
 you choose to share publicly, all of your friends will be able to see who you
 shared it with on their discovery page. If you choose to share privately, it
 will only be seen by those you shared the song with. You can select up to 10
-people to share the song with at once.
+people to share the song with at once, and you can only share one song at a time.
