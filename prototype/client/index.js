@@ -9,17 +9,16 @@ submitAPIButton.onclick = function() {
 
     let formData = new FormData();
     formData.append('APICall', content);
-    console.log(formData);
     axios.post(endpoint, formData, {headers : {
         'Content-Type': 'multipart/form-data'
     }})
         .then((res) => {
             console.log(res);
-            alert("Sucessfully sent to backend")
+            let jsonString = JSON.stringify(res);
+            document.getElementById("output").innerHTML = jsonString;
         })
         .catch((err) => {
             console.error(err);
-            alert("Error: " + err.message)
         })
 
 }
