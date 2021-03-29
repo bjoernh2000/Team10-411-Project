@@ -90,7 +90,7 @@ def postAPI():
     print(apiCall)
     URL = "https://api.spotify.com/v1/users/{0}/playlists".format(apiCall)
     print(URL)
-    PARAMS = {"limit":20, "offset":5}
+    PARAMS = {"limit":20}
     headers = {
     'Authorization': 'Bearer {token}'.format(token=access_token)
     }
