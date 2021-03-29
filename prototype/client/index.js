@@ -14,7 +14,7 @@ submitAPIButton.onclick = function() {
     }})
         .then((res) => {
             console.log(res);
-            let jsonString = JSON.stringify(res);
+            let jsonString = JSON.stringify(res, null, 4);
             document.getElementById("output").innerHTML = jsonString;
         })
         .catch((err) => {
