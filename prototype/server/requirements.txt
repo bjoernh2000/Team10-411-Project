@@ -1,3 +1,4 @@
 Flask==1.1.2
 python-dotenv==0.16.0
 Flask-Cors==1.10.3
+Flask-PyMongo==2.3.0
