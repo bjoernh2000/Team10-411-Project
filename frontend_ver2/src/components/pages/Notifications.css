@@ -1,0 +1,46 @@
+body {
+    background-color: #282c34;
+    color: white;
+    padding: 0 2em;
+}
+
+header {
+    color: white;
+    text-align: center;
+    font-family: "Courier New", Courier, monospace;
+    margin: 2em 0;
+}
+
+.notif-even-row {
+    background-color: #53565d;
+}
+
+table {
+    width: 100%;
+}
+
+td {
+    font-size: 1.5em;
+    column-width: 50%;
+    padding: 0.5em 1em;
+}
+
+.notif-info {
+    width: 100%;
+    white-space: nowrap;
+}
+
+.button-link {
+    min-width: 3em;
+    text-align: center;
+    color: white;
+    display: table-cell;
+    padding: 0.5em;
+    background-color: #c07007;
+    border: 2px solid #c07007;
+    border-radius: 5px;
+}
+
+.button-link:hover {
+    background-color: #9a5a06;
+}
