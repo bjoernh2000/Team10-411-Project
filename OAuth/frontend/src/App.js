@@ -7,6 +7,9 @@ import ShareMusic from './components/pages/ShareMusic';
 import Discover from './components/pages/Discover';
 import Notifications from './components/pages/Notifications';
 import {BrowserRouter as Router, Switch, Route} from 'react-router-dom';
+import { Helmet } from 'react-helmet'
+
+const TITLE = "BADDJ"
 
 class App extends Component {
 
@@ -50,6 +53,9 @@ class App extends Component {
 
         return (
             <>
+            <Helmet>
+                <title>{ TITLE }</title>
+            </Helmet>
             <Router>
               <Navbar />
                 <Switch>

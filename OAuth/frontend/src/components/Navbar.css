@@ -1,6 +1,6 @@
 .navbar {
     background: black;
-    height: 120px;
+    height: 160px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -48,10 +48,8 @@
   
   .nav-item {
     height: 80px;
-  }
-
-  .spotify-item {
-    height: 80px;
+    display: flex;
+    align-items: center;
   }
   
   .nav-links {
