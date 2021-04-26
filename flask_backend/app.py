@@ -4,7 +4,6 @@ from flask_pymongo import PyMongo
 import flask_login
 
 import json
-import pymongo
 from urllib.parse import quote
 import requests
 import os
