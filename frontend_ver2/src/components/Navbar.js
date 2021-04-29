@@ -59,7 +59,7 @@ function Navbar() {
                     <li className='nav-item'>
                         <SpotifyAuth
                             redirectUri='http://localhost:3000/callback'
-                            clientID="578597110fa642daaef83cd9c122d1d9"
+                            clientID=""
                             scopes={[Scopes.userReadPrivate, Scopes.userReadEmail]}
                         /> 
                     </li>
