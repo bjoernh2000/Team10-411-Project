@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Button } from './Button';
+import 'react-spotify-auth/dist/index.css'
 import './Navbar.css';
+import { SpotifyAuth, Scopes } from 'react-spotify-auth';
 
 function Navbar() {
     const [click, setClick] = useState(false);
@@ -56,12 +57,14 @@ function Navbar() {
                         </Link>
                     </li>
                     <li className='nav-item'>
-                        <Link to='/sign-up' className='nav-links-mobile' onClick={closeMobileMenu}>
-                            Sign Up
-                        </Link>
+                        <SpotifyAuth
+                            redirectUri='http://localhost:3000/callback'
+                            clientID="578597110fa642daaef83cd9c122d1d9"
+                            scopes={[Scopes.userReadPrivate, Scopes.userReadEmail]}
+                        /> 
                     </li>
                 </ul>
-                {button && <Button buttonStyle='btn--outline'>SIGN UP</Button>}
+                {/* {button && <Button buttonStyle='btn--outline'>SIGN UP</Button>} */}
             </div>
         </nav>
        </>
