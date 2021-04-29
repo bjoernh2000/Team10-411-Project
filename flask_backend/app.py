@@ -137,7 +137,7 @@ def isUnique(id):
     return True
 
 # ============================ OAUTH ================================= #
-@app.route("/callback", methods=["POST","OPTIONS"])
+@app.route("/callback", methods=["POST"])
 @cross_origin(origin='*',headers=['Content-Type','Authorization'])
 def callbackv2():
     access_token = request.get_json().get("token")
@@ -151,18 +151,21 @@ def callbackv2():
     profile_data = json.loads(profile_response.text)
 
     # Get user playlist data
-    # playlist_api_endpoint = "{}/playlists".format(profile_data["href"])
-    # playlists_response = requests.get(playlist_api_endpoint, headers=authorization_header)
-    # playlist_data = json.loads(playlists_response.text)
+    playlist_api_endpoint = "{}/playlists".format(profile_data["href"])
+    playlists_response = requests.get(playlist_api_endpoint, headers=authorization_header)
+    playlist_data = json.loads(playlists_response.text)
 
     # Combine profile and playlist data to display
-    display_arr = [profile_data] # + playlist_data["items"]
+    display_arr = [profile_data] + playlist_data["items"]
 
 
     # dont add every time
+    print(profile_data)
     if isUnique(profile_data["id"]):
         user_db_id = mongo.db.users.insert(profile_data)
-    return json.dumps(display_arr)
+        data = {"id":profile_data["id"], "playlists":playlist_data["items"]}
+        mongo.db.playlists.insert(data)
+    return json.dumps([profile_data])
 # =============================================================== #
 
 
