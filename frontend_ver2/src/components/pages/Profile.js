@@ -18,7 +18,7 @@ function Profile() {
                         </div>
                         <div className='friends'>
                             <h5>
-                                7 playlists &nbsp;&nbsp;|&nbsp;&nbsp; 10 friends &nbsp;&nbsp;|&nbsp;&nbsp; 3 mutual friends
+                                7 playlists &nbsp;&nbsp;|&nbsp;&nbsp; 10 friends 
                             </h5>
                         </div>
                     </div>
