@@ -180,5 +180,14 @@ def getProfile():
     print(user, playlist)
     return jsonify([user, playlist])
 
+
+@app.route("/notifications", methods=["GET"])
+@cross_origin(origin='*',headers=['Content-Type','Authorization'])
+@login_required
+def notifications():
+    return
+
+# handle notification responses
+
 if __name__ == "__main__":
     app.run(port=PORT, debug=True)

@@ -16,6 +16,11 @@ import math
 import os
 import requests
 
+from dotenv import load_dotenv
+
+
+load_dotenv()
+
 LAST_FM_API_KEY = os.environ.get("LAST_FM_API_KEY")
 
 SIMILAR_TRACKS_URL = 'http://ws.audioscrobbler.com/2.0/?method=track.getsimilar&artist={1}&track={0}&api_key={2}&autocorrect=1&limit=3&format=json'
@@ -136,6 +141,4 @@ print('Similar users for testUserA: ', getSimilarUsers('testUserA', include_scor
 print('Similar users for testUserB: ', getSimilarUsers('testUserB', include_scores = True))
 print('Similar users for testUserC: ', getSimilarUsers('testUserC', include_scores = True))
 print('Similar users for testUserD: ', getSimilarUsers('testUserD', include_scores = True))
-
-
 
