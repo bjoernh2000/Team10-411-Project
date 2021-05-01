@@ -17,7 +17,7 @@ export class Callback extends Component {
     }
 
     render() {
-        let token = Cookies.get('spotifyAuthToken');
+        const token = Cookies.get("spotifyAuthToken");
         return (
             <div>
                 <SpotifyApiContext.Provider value={token}>
