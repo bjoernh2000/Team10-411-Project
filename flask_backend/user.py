@@ -1,7 +1,6 @@
 from mongoengine import Document, UUIDField
 
 class User(Document):
-    session_id = UUIDField(binary=False, required=True)
     user_id = UUIDField(binary=False, required=True)
 
     # other columns
