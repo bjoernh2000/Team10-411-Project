@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 import { SpotifyApiContext } from 'react-spotify-api';
 import Cookies from 'js-cookie';
 import axios from 'axios';
+import { getHash } from './getHash'
 
 export class Callback extends Component {
 
@@ -17,6 +18,11 @@ export class Callback extends Component {
     }
 
     render() {
+        const accessToken = getHash().access_token
+        console.log(accessToken);
+        if (accessToken) {
+            document.cookie = `spotifyAuthToken=${accessToken}; max-age=${60 * 60};`
+        }
         const token = Cookies.get("spotifyAuthToken");
         return (
             <div>

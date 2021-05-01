@@ -7,7 +7,7 @@ function SignIn() {
         <div className='sign-in'>
             <SpotifyAuth
                             redirectUri='http://localhost:3000/callback'
-                            clientID=''
+                            clientID='578597110fa642daaef83cd9c122d1d9'
                             scopes={[Scopes.userReadPrivate, Scopes.userReadEmail]}
                         />
         </div>
