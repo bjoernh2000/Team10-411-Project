@@ -1,12 +1,15 @@
-import React from 'react';
+import React, { Component } from 'react';
+import { SpotifyAuth, Scopes } from 'react-spotify-auth'
 import './App.css';
 import Navbar from './components/Navbar';
 import Profile from './components/pages/Profile';
 import ShareMusic from './components/pages/ShareMusic';
-import Discover from './components/pages/Discover';
+import Feed from './components/pages/Feed';
 import Notifications from './components/pages/Notifications';
 import Callback from './components/Callback';
+import SignIn from './components/pages/SignIn';
 import {BrowserRouter as Router, Switch, Route} from 'react-router-dom';
+import { Helmet } from 'react-helmet'
 
 function App() {
   return (
@@ -17,8 +20,9 @@ function App() {
           <Route path='/' exact/>
           <Route path='/profile' component={Profile} />
           <Route path='/share-music' component={ShareMusic} />
-          <Route path='/discover' component={Discover} />
+          <Route path='/feed' component={Feed} />
           <Route path='/notifications' component={Notifications} />
+          <Route path='/sign-in' component={SignIn} />
           <Route path='/callback' component={Callback}/>
         </Switch>
     </Router>
