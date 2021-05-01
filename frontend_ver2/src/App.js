@@ -9,7 +9,6 @@ import Notifications from './components/pages/Notifications';
 import Callback from './components/Callback';
 import SignIn from './components/pages/SignIn';
 import {BrowserRouter as Router, Switch, Route} from 'react-router-dom';
-import { Helmet } from 'react-helmet'
 
 function App() {
   return (

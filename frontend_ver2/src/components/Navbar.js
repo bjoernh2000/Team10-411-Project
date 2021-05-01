@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import 'react-spotify-auth/dist/index.css'
 import './Navbar.css';
-import { SpotifyAuth, Scopes } from 'react-spotify-auth';
+import { Button } from './Button';
 
 function Navbar() {
     const [click, setClick] = useState(false);
