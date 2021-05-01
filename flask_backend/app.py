@@ -18,6 +18,7 @@ cors = CORS(app, resources={r"/endpoint": {"origins": "*"}})
 app.config['CORS_HEADERS'] = 'Content-Type'
 
 app.config["MONGO_URI"] = "mongodb://localhost:27017/BadDJDatabase"
+app.config["SECRET_KEY"] = "supersecretkey"
 mongo = PyMongo(app)
 
 login_manager = flask_login.LoginManager()
@@ -121,17 +122,17 @@ tokens = refreshToken(tokens)
 
 # ================================ FLASK SESSIONS ===================================== #
 
-# @login_manager.user_loader
-# def load_user(user_id):
-#     users = mongo.db.user.find_one({"user_id":user_id})
-#     if not users:
-#         return 
-#     user = User()
-#     user.user_id = user_id
-#     return user
+@login_manager.user_loader
+def load_user(user_id):
+    users = mongo.db.users.find_one({"id":user_id})
+    if not users:
+        return 
+    user = User()
+    user.user_id = user_id
+    return user
 
-def isUnique(id):
-    user = mongo.db.users.find_one({"id":id})
+def isUnique(user_id):
+    user = mongo.db.users.find_one({"id":user_id})
     if user:
         return False
     return True
@@ -158,11 +159,9 @@ def callbackv2():
     # Combine profile and playlist data to display
     display_arr = [profile_data] + playlist_data["items"]
 
-    user = User()
-    user.user_id = profile_data["id"]
+    user = User(profile_data["id"])
     flask_login.login_user(user)
     # dont add every time
-    print(profile_data)
     if isUnique(profile_data["id"]):
         user_db_id = mongo.db.users.insert(profile_data)
         data = {"id":profile_data["id"], "playlists":playlist_data["items"]}
@@ -172,7 +171,7 @@ def callbackv2():
 
 @app.route("/getProfile", methods=["GET"])
 @cross_origin(origin='*',headers=['Content-Type','Authorization'])
-@login_required
+@flask_login.login_required
 def getProfile():
     user_id = flask_login.current_user.user_id
     user = mongo.db.users.find_one({"id":user_id})
@@ -183,7 +182,7 @@ def getProfile():
 
 @app.route("/notifications", methods=["GET"])
 @cross_origin(origin='*',headers=['Content-Type','Authorization'])
-@login_required
+@flask_login.login_required
 def notifications():
     return
 

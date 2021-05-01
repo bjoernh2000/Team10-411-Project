@@ -1,10 +1,10 @@
-from mongoengine import Document, UUIDField
+from flask_login import UserMixin
 
-class User(Document):
-    user_id = UUIDField(binary=False, required=True)
-
+class User():
     # other columns
-    @property
+    def __init__(self, user_id):
+        self.user_id = user_id
+
     def get_id(self):
         return self.user_id
 
