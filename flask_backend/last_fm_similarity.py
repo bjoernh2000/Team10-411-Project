@@ -15,11 +15,7 @@ import itertools
 import math
 import os
 import requests
-
-from dotenv import load_dotenv
-
-
-load_dotenv()
+import json
 
 LAST_FM_API_KEY = os.environ.get("LAST_FM_API_KEY")
 
@@ -30,32 +26,41 @@ SIMILAR_TAGS_URL = 'http://ws.audioscrobbler.com/2.0/?method=tag.getsimilar&tag=
 # == Last.FM API methods == #
 
 def getSimilarTracks(song, artist):
+	print("song: {}, artist: {}".format(song, artist))
 	api_response = requests.get(SIMILAR_TRACKS_URL.format(song, artist, LAST_FM_API_KEY)).json()
-	return [song['name'] for song in api_response['similartracks']['track']]
+	if 'similartracks' in api_response:
+		return [song['name'] for song in api_response['similartracks']['track']]
+	else:
+		return None
 
 def getTrackTopTags(song, artist):
 	api_response = requests.get(TOP_TAGS_URL.format(song, artist, LAST_FM_API_KEY)).json()
-	return api_response['toptags']['tag']
+	if 'toptags' in api_response:
+		return api_response['toptags']['tag']
+	else:
+		return None
 
 
 # == Methods to get the user's top X == #
 
-def getUserRankedSongs(user):
+def getUserRankedSongs(mongo, user):
 	# This might want to be implemented in a way that takes the user's listening habits into account
-	return getUserSongs(user)
+	return getUserSongs(mongo, user)
 
-def getUserRankedSimilarSongs(user, songs = None):
+def getUserRankedSimilarSongs(mongo, user, songs = None):
 	if songs == None:
 		songs = getUserSongs(user)
-	unflattened_similar_songs = [getSimilarTracks(song['title'], song['artist']) for song in songs]
+	unflattened_similar_songs = [x for x in [getSimilarTracks(mongo, song['title'], song['artist']) for song in songs] if x is not None]
 	return list(dict.fromkeys(list(itertools.chain(*unflattened_similar_songs))))
 
-def getUserRankedTags(user, songs = None):
+def getUserRankedTags(mongo, user, songs = None):
 	if songs == None:
 		songs = getUserSongs(user)
-	uncombined_tags = [getTrackTopTags(song['title'], song['artist']) for song in songs]
+	uncombined_tags = [getTrackTopTags(mongo, song['title'], song['artist']) for song in songs]
 	tag_scores = {}
 	for song_tags in uncombined_tags:
+		if song_tags is None:
+			continue
 		temp_counts = {}
 		max_count = 1
 		for i in range(len(song_tags)):
@@ -73,21 +78,21 @@ def getUserRankedTags(user, songs = None):
 
 # == Friend recommendations etc == #
 
-def getSimilarUsers(user, include_scores = False):
+def getSimilarUsers(mongo, user, include_scores = False):
 	# Can't get this info directly from Last.FM,
 	# but can get track, similar tracks, and tag
 	# info for a user's songs, then use that to 
 	# determine how similar they are.
 	# Step 1) Get data from Last.FM for the current user
-	songs = getUserRankedSongs(user)
-	similar_songs = getUserRankedSimilarSongs(user, songs=songs)
-	tags = getUserRankedTags(user, songs=songs)
+	songs = getUserRankedSongs(mongo, user)
+	similar_songs = getUserRankedSimilarSongs(mongo, user, songs=songs)
+	tags = getUserRankedTags(mongo, user, songs=songs)
 	# Step 2) Calculate similarity scores
 	# TODO: Numbers might need to be tweaked
 	similar_users = {}
-	all_users = getAllUsers()
+	all_users = getAllUsers(mongo)
 	for other_user in all_users:
-		if other_user == user:
+		if other_user == user.user_id:
 			continue
 		# This data should *really* be stored in the database so this isn't hitting the Last.FM API so many times per recommendation
 		other_user_songs = getUserRankedSongs(other_user)
@@ -120,25 +125,52 @@ def rankedListSimilarity(a, b):
 
 # == User function stubs == #
 
-def getAllUsers():
-	return ['testUserA', 'testUserB', 'testUserC', 'testUserD']
+def getAllUsers(mongo):
+    # return ['testUserA', 'testUserB', 'testUserC', 'testUserD']
+	return mongo.db.users.distinct("id")
 
-def getUserSongs(user):
-	# TODO: Implement!
-	if user == "testUserA":
-		return [{'title':'19-2000','artist':'gorillaz'},{'title':'feel good inc.','artist':'gorillaz'}]
-	elif user == "testUserB":
-		return [{'title':'on melancholy hill','artist':'gorillaz'},{'title':'Yellow Submarine','artist':'the beatles'}]
-	elif user == "testUserC":
-		return [{'title':'every planet we reach is dead','artist':'gorillaz'}]
-	elif user == "testUserD":
-		return [{'title':'hey jude','artist':'the beatles'}]
-	else:
-		return None
+def getUserSongs(mongo, user):
+    playlists_urls = list(mongo.db.playlists.aggregate([
+        {
+            "$match": {
+                "id":user.user_id
+            }
+        }, 
+        {
+            "$unwind": "$playlists"
+        }, 
+        {
+            "$group": {
+                "_id": None, 
+                "playlists": {
+                    "$push": "$playlists.tracks.href"
+                }
+            }
+        }, 
+        {
+            "$project": {
+                "playlists": 1,
+                "_id": 0
+            }
+        }
+    ]))[0]['playlists']
+    songs = []
+    for playlist_url in playlists_urls:
+        print("request url is {}".format("{}?market=US".format(playlist_url)))
+        print("auth header is {}".format(user.authorization_header))
+        response = requests.get("{}?market=US".format(playlist_url), headers=user.authorization_header).text
+        print("response was {}".format(response))
+        song_data = json.loads(response)
+        print("song_data was {}".format(song_data))
+        for item in song_data['items']:
+            songs.append({'artist': item['track']['artists'][0]['name'], 'title': item['track']['name']})
+    return songs
 
 # == Test code == #
-print('Similar users for testUserA: ', getSimilarUsers('testUserA', include_scores = True))
-print('Similar users for testUserB: ', getSimilarUsers('testUserB', include_scores = True))
-print('Similar users for testUserC: ', getSimilarUsers('testUserC', include_scores = True))
-print('Similar users for testUserD: ', getSimilarUsers('testUserD', include_scores = True))
+# print('Similar users for testUserA: ', getSimilarUsers('testUserA', include_scores = True))
+# print('Similar users for testUserB: ', getSimilarUsers('testUserB', include_scores = True))
+# print('Similar users for testUserC: ', getSimilarUsers('testUserC', include_scores = True))
+# print('Similar users for testUserD: ', getSimilarUsers('testUserD', include_scores = True))
+
+
 
