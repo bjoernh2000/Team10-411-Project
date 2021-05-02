@@ -16,15 +16,16 @@ from user import User
 load_dotenv()
 
 app = Flask(__name__)
-cors = CORS(app, resources={r"/endpoint": {"origins": "*"}})
+login_manager = flask_login.LoginManager()
+login_manager.init_app(app)
+
+cors = CORS(app, resources={r"/*": {"origins": "*"}})
 app.config['CORS_HEADERS'] = 'Content-Type'
 
 app.config["MONGO_URI"] = "mongodb://localhost:27017/BadDJDatabase"
 app.config["SECRET_KEY"] = "supersecretkey"
 mongo = PyMongo(app)
 
-login_manager = flask_login.LoginManager()
-login_manager.init_app(app)
 
 CLIENT_ID = os.environ.get("CLIENT_ID")
 CLIENT_SECRET = os.environ.get("CLIENT_SECRET")
@@ -127,6 +128,7 @@ tokens = refreshToken(tokens)
 
 @login_manager.user_loader
 def load_user(user_id):
+    print("user loader")
     users = mongo.db.users.find_one({"id":user_id})
     if not users:
         return 
@@ -148,12 +150,12 @@ def callbackv2():
 
     # Auth Step 6: Use the access token to access Spotify API
     authorization_header = {"Authorization": "Bearer {}".format(access_token)}
-    stored_auths[profile_data["id"]] = authorization_header;
 
     # Get profile data
     user_profile_api_endpoint = "{}/me".format(SPOTIFY_API_URL)
     profile_response = requests.get(user_profile_api_endpoint, headers=authorization_header)
     profile_data = json.loads(profile_response.text)
+    stored_auths[profile_data["id"]] = authorization_header
 
     # Get user playlist data
     playlist_api_endpoint = "{}/playlists".format(profile_data["href"])
