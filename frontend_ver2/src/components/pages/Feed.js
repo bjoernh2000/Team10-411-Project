@@ -1,7 +1,6 @@
-import React, { Component } from 'react'
+import React from 'react'
 import './Feed.css'
 import TweetBox from './TweetBox'
-import axios from 'axios'
 
 function Feed() {
     return(

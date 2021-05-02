@@ -1,5 +1,4 @@
-import React, { Component } from 'react';
-import { SpotifyAuth, Scopes } from 'react-spotify-auth'
+import React from 'react';
 import './App.css';
 import Navbar from './components/Navbar';
 import Profile from './components/pages/Profile';
