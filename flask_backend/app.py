@@ -7,7 +7,9 @@ import json
 from urllib.parse import quote
 import requests
 import os
+import last_fm_similarity
 from dotenv import load_dotenv
+from bson import json_util
 
 from user import User
 
@@ -57,6 +59,7 @@ auth_query_parameters = {
     "client_id": CLIENT_ID
 }
 
+stored_auths = {};
 
 # ======================================== TOKENS ===================================== #
 
@@ -127,8 +130,7 @@ def load_user(user_id):
     users = mongo.db.users.find_one({"id":user_id})
     if not users:
         return 
-    user = User()
-    user.user_id = user_id
+    user = User(user_id, stored_auths[user_id])
     return user
 
 def isUnique(user_id):
@@ -141,10 +143,12 @@ def isUnique(user_id):
 @app.route("/callback", methods=["POST"])
 @cross_origin(origin='*',headers=['Content-Type','Authorization'])
 def callbackv2():
+    print("Callback was called!")
     access_token = request.get_json().get("token")
 
     # Auth Step 6: Use the access token to access Spotify API
     authorization_header = {"Authorization": "Bearer {}".format(access_token)}
+    stored_auths[profile_data["id"]] = authorization_header;
 
     # Get profile data
     user_profile_api_endpoint = "{}/me".format(SPOTIFY_API_URL)
@@ -159,14 +163,14 @@ def callbackv2():
     # Combine profile and playlist data to display
     display_arr = [profile_data] + playlist_data["items"]
 
-    user = User(profile_data["id"])
+    user = User(profile_data["id"], authorization_header)
     flask_login.login_user(user)
     # dont add every time
     if isUnique(profile_data["id"]):
         user_db_id = mongo.db.users.insert(profile_data)
         data = {"id":profile_data["id"], "playlists":playlist_data["items"]}
         mongo.db.playlists.insert(data)
-    return json.dumps([profile_data])
+    return jsonify(json.dumps([profile_data]))
 # =============================================================== #
 
 @app.route("/getProfile", methods=["GET"])
@@ -177,16 +181,75 @@ def getProfile():
     user = mongo.db.users.find_one({"id":user_id})
     playlist = mongo.db.playlists.find_one({"id":user_id})
     print(user, playlist)
-    return jsonify([user, playlist])
+    return json.loads(json_util.dumps(user))
 
 
 @app.route("/notifications", methods=["GET"])
 @cross_origin(origin='*',headers=['Content-Type','Authorization'])
 @flask_login.login_required
 def notifications():
-    return
+    user_id = flask_login.current_user.user_id
+    notifications = [x for x in mongo.db.notifications.aggregate([{"$match": {"user_id": user_id}}, {"$sort": {"timestamp": -1}}])]
+    return jsonify(notifications)
 
-# handle notification responses
+@app.route("/friends/recommendations")
+@flask_login.login_required
+def get_friend_recommendations():
+    user_id = flask_login.current_user.user_id
+    friend_recommendations = last_fm_similarity.getSimilarUsers(mongo, flask_login.current_user, True)
+    friend_recommendations = [{"user_id": user_id, "similarity_score": similarity_score} for (user_id, similarity_score) in friend_recommendations if not user_is_friends_with(user_id, x)]
+    return jsonify(friend_recommendations)
+
+@app.route("/friends")
+@flask_login.login_required
+def get_friends():
+    user_id = flask_login.current_user.user_id
+    return [x.friend_user_id for x in mongo.db.friends.find({"user_id": user_id}, {"_id":0, "friend_user_id": 1})]
+
+@app.route("/friends/add")
+@flask_login.login_required
+def add_friend():
+    user_id = flask_login.current_user.user_id
+    friend_user_id = request.args["friend_user_id"]
+    mongo.db.friends.insert({"user_id": user_id, "friend_user_id": friend_user_id})
+    return ('', 204)
+
+@app.route("/friends/remove")
+@flask_login.login_required
+def remove_friend():
+    user_id = flask_login.current_user.user_id
+    friend_user_id = request.args["friend_user_id"]
+    mongo.db.friends.remove({"user_id": user_id, "friend_user_id": friend_user_id})
+    return ('', 204)
+	
+@app.route("/notification_button_pressed")
+@flask_login.login_required
+def notification_button_pressed():
+    # TODO: consider doing something other than just removing the notification here
+    user_id = flask_login.current_user.user_id
+    notification_id = request.args["notification_id"]
+    mongo.db.notifications.remove({"user_id": user_id, "notification_id": notification_id})
+    return ('', 204)
+
+@app.route("/test_authme")
+def test_authme():
+    authorization_header = {"Authorization": "Bearer {}".format("BQCP_dEU0x2SVMFPCZ8RexjBSfjez48CFgwfF3cRLG4mv-zb3bRK6S1ZZHS7AKE_1aMTOdScym2XuL7PA3M84GGAZ2aypZWvNMxXlCxIgn80Rc-_Ki415r3KjI3sNxSlUXXjeBrayD0H5Hu3080vB6JpbryuBva1MEfJNXyCniv6iD480TfnVaQticWow2Y6jIgIEnreXU7rPY4")}
+    user = User("f1sh3", authorization_header)
+    stored_auths[user.user_id] = authorization_header;
+    flask_login.login_user(user)
+    return ('', 204)
+    
+def user_is_friends_with(user_id, friend_user_id):
+    return mongo.db.friends.find({"user_id": user_id, "friend_user_id": friend_user_id}).length > 0
+
+def send_notification(user_id, text, type):
+    timestamp = time.time_ns() // 1_000_000
+    mongo.db.notifications.insert({"user_id": user_id, "text": text, "type": type, "timestamp": timestamp})
+    return ('', 204)
+
+@app.route("/test")
+def test():
+    return "{\"test\":1}"
 
 if __name__ == "__main__":
     app.run(port=PORT, debug=True)
