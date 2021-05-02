@@ -14,7 +14,7 @@ from user import User
 load_dotenv()
 
 app = Flask(__name__)
-cors = CORS(app, resources={r"/endpoint": {"origins": "*"}})
+cors = CORS(app, resources={r"/*": {"origins": "*"}})
 app.config['CORS_HEADERS'] = 'Content-Type'
 
 app.config["MONGO_URI"] = "mongodb://localhost:27017/BadDJDatabase"
@@ -166,8 +166,42 @@ def callbackv2():
         user_db_id = mongo.db.users.insert(profile_data)
         data = {"id":profile_data["id"], "playlists":playlist_data["items"]}
         mongo.db.playlists.insert(data)
-    return json.dumps([profile_data])
+    return json.dumps(profile_data)
 # =============================================================== #
+
+def appendToObject(cursor):
+        result = []
+        for row in cursor:
+            if row['_id']:
+                row['_id'] = str(row['_id'])
+            result.append(row)
+        return result
+
+
+def areFriends(friend_one, friend_two):
+    cur1 = mongo.db.friends.find({"friend_one":friend_one})
+    cur2 = mongo.db.friends.find({"friend_two":friend_one})
+    rel1 = appendToObject(cur1)
+    rel2 = appendToObject(cur2)
+    for row in rel1:
+        if row["friend_two"] == friend_two:
+            return True
+    for row in rel2:
+        if row["friend_one"] == friend_two:
+            return True
+    return False
+
+def getFriends(user_id):
+    cur1 = mongo.db.friends.find({"friend_one":user_id})
+    cur2 = mongo.db.friends.find({"friend_two":user_id})
+    rel1 = appendToObject(cur1)
+    rel2 = appendToObject(cur2)
+    friends = []
+    for row in rel1:
+        friends.append(row["friend_two"])
+    for row in rel2:
+        friends.append(row["friend_one"])
+    return friends
 
 @app.route("/getProfile", methods=["GET"])
 @cross_origin(origin='*',headers=['Content-Type','Authorization'])
@@ -187,6 +221,25 @@ def notifications():
     return
 
 # handle notification responses
+
+@app.route("/addFriend",methods=["POST"])
+@cross_origin(origin='*',headers=['Content-Type','Authorization'])
+@flask_login.login_required
+def addFriend():
+    friend_id = request.get_json().get("friend_id")
+    user_id = flask_login.current_user.user_id
+    if areFriends(user_id,friend_id):
+        return jsonify("Users are already friends")
+    mongo.db.friends.insert({"friend_one":user_id,"friend_two":friend_id})
+    return jsonify("success adding friends")
+
+@app.route("/displayFriends", methods=["GET"])
+@cross_origin(origin='*',headers=['Content-Type','Authorization'])
+@flask_login.login_required
+def displayFriends():
+    user_id = flask_login.current_user.user_id
+    friends = getFriends(user_id)
+    return jsonify(friends)
 
 if __name__ == "__main__":
     app.run(port=PORT, debug=True)
