@@ -20,6 +20,13 @@ axios_instance.interceptors.request.use((config) => {
 	return config
 });
 export const axios = axios_instance;
+  
+const app_config = require('./config.json');
+const BACKEND_URL = app_config["BACKEND_URL"]
+const FRONTEND_URL = app_config["FRONTEND_URL"]
+export const backend_url = BACKEND_URL;
+export const frontend_url = FRONTEND_URL;
+
 
 function App() {
   return (

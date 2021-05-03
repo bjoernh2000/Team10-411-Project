@@ -4,7 +4,6 @@ from flask_cors import CORS, cross_origin
 from flask_pymongo import PyMongo
 from flask.sessions import SecureCookieSessionInterface
 
-
 import json
 from urllib.parse import quote
 import requests
@@ -20,17 +19,29 @@ load_dotenv()
 
 app = Flask(__name__)
 
+app_config = json.load(open('../frontend_ver2/src/config.json',))
+
 # If you change this, you'll also need to update it in the frontend code (fair warning!)
 SESSION_WORKAROUND_HEADER_NAME = "X-Flask-Session-Workaround"
 
-cors = CORS(app, resources={r"/*": {"origins": ["http://localhost:3000"]}}, support_credentials=True)
+# Service urls
+# Frontend:
+FRONTEND_URL_FULL = app_config["FRONTEND_URL"]
+FRONTEND_DOMAIN = app_config["FRONTEND_DOMAIN"]
+# Backend:
+BACKEND_URL_FULL = app_config["BACKEND_URL"]
+# Database: 
+# Note: This URL should be local only (don't expose this to the internet please!)
+DATABASE_URL_FULL = app_config["MONGODB_URL"]
+
+cors = CORS(app, resources={r"/*": {"origins": [FRONTEND_URL_FULL]}}, support_credentials=True)
 app.config['CORS_SUPPORTS_CREDENTIALS'] = True;
 app.config['CORS_HEADERS'] = ['Content-Type', SESSION_WORKAROUND_HEADER_NAME];
 app.config['CORS_EXPOSE_HEADERS'] = SESSION_WORKAROUND_HEADER_NAME;
 app.config['CORS_ALLOW_HEADERS'] = SESSION_WORKAROUND_HEADER_NAME;
-app.config['CORS_ORIGINS'] = "http://localhost:3000";
+app.config['CORS_ORIGINS'] = FRONTEND_URL_FULL;
 
-app.config["MONGO_URI"] = "mongodb://localhost:27017/BadDJDatabase"
+app.config["MONGO_URI"] = DATABASE_URL_FULL
 app.config["SECRET_KEY"] = "supersecretkey"
 mongo = PyMongo(app)
 
@@ -43,10 +54,8 @@ session_cookie_data = session_serializer.dumps(session_clone)
 CLIENT_ID = os.environ.get("CLIENT_ID")
 CLIENT_SECRET = os.environ.get("CLIENT_SECRET")
 
-domain = 'localhost:8080'
 AUTH_URL = 'https://accounts.spotify.com/api/token'
 REFRESH_URL = 'https://accounts.spotify.com/api/token'
-USER_AUTH_URL = 'https://accounts.spotify.com/authorize?client_id=2c8231fad0534937afacccb8a7942d5f&response_type=code&redirect_uri=https://' + domain + '/spotifyAuthCallback&scope=user-read-private user-read-email&state=34fFs29kd09'
 USER_ACCESS_URL = 'https://accounts.spotify.com/api/token'
 
 app.config["SESSION_COOKIE_HTTPONLY"] = False
@@ -59,9 +68,7 @@ SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token"
 SPOTIFY_API_BASE_URL = "https://api.spotify.com"
 API_VERSION = "v1"
 SPOTIFY_API_URL = "{}/{}".format(SPOTIFY_API_BASE_URL, API_VERSION)
-CLIENT_SIDE_URL = "http://127.0.0.1"
-PORT = 8080
-REDIRECT_URI = "{}:{}/callback".format(CLIENT_SIDE_URL, PORT)
+REDIRECT_URI = "/callback".format(BACKEND_URL_FULL)
 SCOPE = "playlist-modify-public playlist-modify-private"
 STATE = ""
 SHOW_DIALOG_bool = True
@@ -96,7 +103,7 @@ def login_workaround(request):
 def save_login_session(user, resp):
     session_identifier = secrets.token_urlsafe(128)
     session_store[session_identifier] = user
-    resp.headers.add('Access-Control-Allow-Origin', 'localhost')
+    resp.headers.add('Access-Control-Allow-Origin', FRONTEND_DOMAIN)
     resp.headers.add(SESSION_WORKAROUND_HEADER_NAME, session_identifier)
     return session_identifier
 
@@ -175,7 +182,7 @@ tokens = refreshToken(tokens)
 
 # ============================ OAUTH ================================= #
 @app.route("/callback", methods=["POST"])
-@cross_origin(origin='localhost', headers=SESSION_LOGIN_HEADERS)
+@cross_origin(origin=FRONTEND_DOMAIN, headers=SESSION_LOGIN_HEADERS)
 def callbackv2():
     print("Callback was called!")
     access_token = request.get_json().get("token")
@@ -213,7 +220,7 @@ def callbackv2():
 # =============================================================== #
 
 @app.route("/getProfile", methods=["GET"])
-@cross_origin(origin='localhost',headers=SESSION_LOGIN_HEADERS)
+@cross_origin(origin=FRONTEND_DOMAIN,headers=SESSION_LOGIN_HEADERS)
 @login_required
 def getProfile(current_user):
     user_id = current_user.user_id
@@ -224,7 +231,7 @@ def getProfile(current_user):
 
 
 @app.route("/notifications", methods=["GET"])
-@cross_origin(origin='localhost', headers=SESSION_LOGIN_HEADERS)
+@cross_origin(origin=FRONTEND_DOMAIN, headers=SESSION_LOGIN_HEADERS)
 @login_required
 def notifications(current_user):
     user_id = current_user.user_id
@@ -232,7 +239,7 @@ def notifications(current_user):
     return jsonify(notifications)
 
 @app.route("/friends/recommendations")
-@cross_origin(origin='localhost', headers=SESSION_LOGIN_HEADERS)
+@cross_origin(origin=FRONTEND_DOMAIN, headers=SESSION_LOGIN_HEADERS)
 @login_required
 def get_friend_recommendations(current_user):
     user_id = current_user.user_id
@@ -241,14 +248,14 @@ def get_friend_recommendations(current_user):
     return jsonify(friend_recommendations)
 
 @app.route("/friends")
-@cross_origin(origin='localhost', headers=SESSION_LOGIN_HEADERS)
+@cross_origin(origin=FRONTEND_DOMAIN, headers=SESSION_LOGIN_HEADERS)
 @login_required
 def get_friends(current_user):
     user_id = current_user.user_id
     return [x.friend_user_id for x in mongo.db.friends.find({"user_id": user_id}, {"_id":0, "friend_user_id": 1})]
 
 @app.route("/friends/add")
-@cross_origin(origin='localhost', headers=SESSION_LOGIN_HEADERS)
+@cross_origin(origin=FRONTEND_DOMAIN, headers=SESSION_LOGIN_HEADERS)
 @login_required
 def add_friend(current_user):
     user_id = current_user.user_id
@@ -257,7 +264,7 @@ def add_friend(current_user):
     return ('', 204)
 
 @app.route("/friends/remove")
-@cross_origin(origin='localhost', headers=SESSION_LOGIN_HEADERS)
+@cross_origin(origin=FRONTEND_DOMAIN, headers=SESSION_LOGIN_HEADERS)
 @login_required
 def remove_friend(current_user):
     user_id = current_user.user_id
@@ -266,7 +273,7 @@ def remove_friend(current_user):
     return ('', 204)
 	
 @app.route("/notification_button_pressed")
-@cross_origin(origin='localhost', headers=SESSION_LOGIN_HEADERS)
+@cross_origin(origin=FRONTEND_DOMAIN, headers=SESSION_LOGIN_HEADERS)
 @login_required
 def notification_button_pressed(current_user):
     # TODO: consider doing something other than just removing the notification here
@@ -276,7 +283,7 @@ def notification_button_pressed(current_user):
     return ('', 204)
 
 @app.route("/test_authme")
-@cross_origin(origin='localhost', headers=SESSION_LOGIN_HEADERS)
+@cross_origin(origin=FRONTEND_DOMAIN, headers=SESSION_LOGIN_HEADERS)
 def test_authme():
     authorization_header = {"Authorization": "Bearer {}".format("your-bearer-token-here")}
     user = User("your-username-here", authorization_header)
