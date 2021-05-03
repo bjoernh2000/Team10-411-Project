@@ -24,8 +24,10 @@ export const axios = axios_instance;
 const app_config = require('./config.json');
 const BACKEND_URL = app_config["BACKEND_URL"]
 const FRONTEND_URL = app_config["FRONTEND_URL"]
+const SPOTIFY_CLIENT_ID = app_config["SPOTIFY_CLIENT_ID"]
 export const backend_url = BACKEND_URL;
 export const frontend_url = FRONTEND_URL;
+export const spotify_client_id = SPOTIFY_CLIENT_ID;
 
 
 function App() {

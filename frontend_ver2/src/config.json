@@ -18,7 +18,9 @@
 
 	"BACKEND_URL": "http://localhost:8080",
 
-	"MONGODB_URL": "mongodb://localhost:27017/BadDJDatabase"
+	"MONGODB_URL": "mongodb://localhost:27017/BadDJDatabase",
+	
+	"SPOTIFY_CLIENT_ID": "578597110fa642daaef83cd9c122d1d9"
 	
 }
 
