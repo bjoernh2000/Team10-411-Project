@@ -1,7 +1,9 @@
-from flask import Flask, jsonify, request, Response, render_template, redirect
+from flask import Flask, jsonify, request, Response, render_template, redirect, session
+import flask.helpers
 from flask_cors import CORS, cross_origin
 from flask_pymongo import PyMongo
-import flask_login
+from flask.sessions import SecureCookieSessionInterface
+
 
 import json
 from urllib.parse import quote
@@ -10,21 +12,32 @@ import os
 import last_fm_similarity
 from dotenv import load_dotenv
 from bson import json_util
+import secrets
 
 from user import User
 
 load_dotenv()
 
 app = Flask(__name__)
-login_manager = flask_login.LoginManager()
-login_manager.init_app(app)
 
-cors = CORS(app, resources={r"/*": {"origins": "*"}})
-app.config['CORS_HEADERS'] = 'Content-Type'
+# If you change this, you'll also need to update it in the frontend code (fair warning!)
+SESSION_WORKAROUND_HEADER_NAME = "X-Flask-Session-Workaround-Because-Cross-Site-Cookies-Are-Death"
+
+cors = CORS(app, resources={r"/*": {"origins": ["http://localhost:3000"]}}, support_credentials=True)
+app.config['CORS_SUPPORTS_CREDENTIALS'] = True;
+app.config['CORS_HEADERS'] = ['Content-Type', SESSION_WORKAROUND_HEADER_NAME];
+app.config['CORS_EXPOSE_HEADERS'] = SESSION_WORKAROUND_HEADER_NAME;
+app.config['CORS_ALLOW_HEADERS'] = SESSION_WORKAROUND_HEADER_NAME;
+app.config['CORS_ORIGINS'] = "http://localhost:3000";
 
 app.config["MONGO_URI"] = "mongodb://localhost:27017/BadDJDatabase"
 app.config["SECRET_KEY"] = "supersecretkey"
 mongo = PyMongo(app)
+
+
+session_serializer = SecureCookieSessionInterface().get_signing_serializer(app)
+session_clone = dict(foo='bar')
+session_cookie_data = session_serializer.dumps(session_clone)
 
 
 CLIENT_ID = os.environ.get("CLIENT_ID")
@@ -35,6 +48,8 @@ AUTH_URL = 'https://accounts.spotify.com/api/token'
 REFRESH_URL = 'https://accounts.spotify.com/api/token'
 USER_AUTH_URL = 'https://accounts.spotify.com/authorize?client_id=2c8231fad0534937afacccb8a7942d5f&response_type=code&redirect_uri=https://' + domain + '/spotifyAuthCallback&scope=user-read-private user-read-email&state=34fFs29kd09'
 USER_ACCESS_URL = 'https://accounts.spotify.com/api/token'
+
+app.config["SESSION_COOKIE_HTTPONLY"] = False
 
 
 # ========================= OAUTH SETUP ====================================== #
@@ -60,7 +75,42 @@ auth_query_parameters = {
     "client_id": CLIENT_ID
 }
 
-stored_auths = {};
+session_store = {};
+
+
+def isUnique(user_id):
+    user = mongo.db.users.find_one({"id":user_id})
+    if user:
+        return False
+    return True
+    
+
+# ================================= SESSION WORKAROUND =============================== #
+
+def login_workaround(request):
+    session_identifier = request.headers.get(SESSION_WORKAROUND_HEADER_NAME)
+    if session_identifier is None or session_identifier not in session_store:
+        return None
+    return session_store[session_identifier]
+
+def save_login_session(user, resp):
+    session_identifier = secrets.token_urlsafe(128)
+    session_store[session_identifier] = user
+    resp.headers.add('Access-Control-Allow-Origin', 'localhost')
+    resp.headers.add(SESSION_WORKAROUND_HEADER_NAME, session_identifier)
+    return session_identifier
+
+def login_required(func):
+    def wrapper(*args, **kwargs):
+        current_user = login_workaround(request)
+        if current_user is None:
+            return ('', 401)
+        else:
+            return func(current_user, *args, **kwargs)
+    wrapper.__name__ = func.__name__
+    return wrapper
+
+SESSION_LOGIN_HEADERS = ['Content-Type','Authorization',SESSION_WORKAROUND_HEADER_NAME]
 
 # ======================================== TOKENS ===================================== #
 
@@ -123,27 +173,9 @@ access_token = tokens['access_token']
 refresh_token = tokens['refresh_token']
 tokens = refreshToken(tokens)
 
-
-# ================================ FLASK SESSIONS ===================================== #
-
-@login_manager.user_loader
-def load_user(user_id):
-    print("user loader")
-    users = mongo.db.users.find_one({"id":user_id})
-    if not users:
-        return 
-    user = User(user_id, stored_auths[user_id])
-    return user
-
-def isUnique(user_id):
-    user = mongo.db.users.find_one({"id":user_id})
-    if user:
-        return False
-    return True
-
 # ============================ OAUTH ================================= #
 @app.route("/callback", methods=["POST"])
-@cross_origin(origin='*',headers=['Content-Type','Authorization'])
+@cross_origin(origin='localhost', headers=SESSION_LOGIN_HEADERS)
 def callbackv2():
     print("Callback was called!")
     access_token = request.get_json().get("token")
@@ -155,7 +187,7 @@ def callbackv2():
     user_profile_api_endpoint = "{}/me".format(SPOTIFY_API_URL)
     profile_response = requests.get(user_profile_api_endpoint, headers=authorization_header)
     profile_data = json.loads(profile_response.text)
-    stored_auths[profile_data["id"]] = authorization_header
+    # stored_auths[profile_data["id"]] = authorization_header
 
     # Get user playlist data
     playlist_api_endpoint = "{}/playlists".format(profile_data["href"])
@@ -165,21 +197,26 @@ def callbackv2():
     # Combine profile and playlist data to display
     display_arr = [profile_data] + playlist_data["items"]
 
+    # Make a user, make a session identifier, and persist them so we can restore the session on future calls
+    resp = flask.helpers.make_response();
     user = User(profile_data["id"], authorization_header)
-    flask_login.login_user(user)
+    save_login_session(user, resp);
+    
     # dont add every time
     if isUnique(profile_data["id"]):
         user_db_id = mongo.db.users.insert(profile_data)
         data = {"id":profile_data["id"], "playlists":playlist_data["items"]}
         mongo.db.playlists.insert(data)
-    return jsonify(json.dumps([profile_data]))
+        
+    return resp
+
 # =============================================================== #
 
 @app.route("/getProfile", methods=["GET"])
-@cross_origin(origin='*',headers=['Content-Type','Authorization'])
-@flask_login.login_required
-def getProfile():
-    user_id = flask_login.current_user.user_id
+@cross_origin(origin='localhost',headers=SESSION_LOGIN_HEADERS)
+@login_required
+def getProfile(current_user):
+    user_id = current_user.user_id
     user = mongo.db.users.find_one({"id":user_id})
     playlist = mongo.db.playlists.find_one({"id":user_id})
     print(user, playlist)
@@ -187,59 +224,65 @@ def getProfile():
 
 
 @app.route("/notifications", methods=["GET"])
-@cross_origin(origin='*',headers=['Content-Type','Authorization'])
-@flask_login.login_required
-def notifications():
-    user_id = flask_login.current_user.user_id
+@cross_origin(origin='localhost', headers=SESSION_LOGIN_HEADERS)
+@login_required
+def notifications(current_user):
+    user_id = current_user.user_id
     notifications = [x for x in mongo.db.notifications.aggregate([{"$match": {"user_id": user_id}}, {"$sort": {"timestamp": -1}}])]
     return jsonify(notifications)
 
 @app.route("/friends/recommendations")
-@flask_login.login_required
-def get_friend_recommendations():
-    user_id = flask_login.current_user.user_id
-    friend_recommendations = last_fm_similarity.getSimilarUsers(mongo, flask_login.current_user, True)
+@cross_origin(origin='localhost', headers=SESSION_LOGIN_HEADERS)
+@login_required
+def get_friend_recommendations(current_user):
+    user_id = current_user.user_id
+    friend_recommendations = last_fm_similarity.getSimilarUsers(mongo, current_user, True)
     friend_recommendations = [{"user_id": user_id, "similarity_score": similarity_score} for (user_id, similarity_score) in friend_recommendations if not user_is_friends_with(user_id, x)]
     return jsonify(friend_recommendations)
 
 @app.route("/friends")
-@flask_login.login_required
-def get_friends():
-    user_id = flask_login.current_user.user_id
+@cross_origin(origin='localhost', headers=SESSION_LOGIN_HEADERS)
+@login_required
+def get_friends(current_user):
+    user_id = current_user.user_id
     return [x.friend_user_id for x in mongo.db.friends.find({"user_id": user_id}, {"_id":0, "friend_user_id": 1})]
 
 @app.route("/friends/add")
-@flask_login.login_required
-def add_friend():
-    user_id = flask_login.current_user.user_id
+@cross_origin(origin='localhost', headers=SESSION_LOGIN_HEADERS)
+@login_required
+def add_friend(current_user):
+    user_id = current_user.user_id
     friend_user_id = request.args["friend_user_id"]
     mongo.db.friends.insert({"user_id": user_id, "friend_user_id": friend_user_id})
     return ('', 204)
 
 @app.route("/friends/remove")
-@flask_login.login_required
-def remove_friend():
-    user_id = flask_login.current_user.user_id
+@cross_origin(origin='localhost', headers=SESSION_LOGIN_HEADERS)
+@login_required
+def remove_friend(current_user):
+    user_id = current_user.user_id
     friend_user_id = request.args["friend_user_id"]
     mongo.db.friends.remove({"user_id": user_id, "friend_user_id": friend_user_id})
     return ('', 204)
 	
 @app.route("/notification_button_pressed")
-@flask_login.login_required
-def notification_button_pressed():
+@cross_origin(origin='localhost', headers=SESSION_LOGIN_HEADERS)
+@login_required
+def notification_button_pressed(current_user):
     # TODO: consider doing something other than just removing the notification here
-    user_id = flask_login.current_user.user_id
+    user_id = current_user.user_id
     notification_id = request.args["notification_id"]
     mongo.db.notifications.remove({"user_id": user_id, "notification_id": notification_id})
     return ('', 204)
 
 @app.route("/test_authme")
+@cross_origin(origin='localhost', headers=SESSION_LOGIN_HEADERS)
 def test_authme():
-    authorization_header = {"Authorization": "Bearer {}".format("BQCP_dEU0x2SVMFPCZ8RexjBSfjez48CFgwfF3cRLG4mv-zb3bRK6S1ZZHS7AKE_1aMTOdScym2XuL7PA3M84GGAZ2aypZWvNMxXlCxIgn80Rc-_Ki415r3KjI3sNxSlUXXjeBrayD0H5Hu3080vB6JpbryuBva1MEfJNXyCniv6iD480TfnVaQticWow2Y6jIgIEnreXU7rPY4")}
-    user = User("f1sh3", authorization_header)
-    stored_auths[user.user_id] = authorization_header;
-    flask_login.login_user(user)
-    return ('', 204)
+    authorization_header = {"Authorization": "Bearer {}".format("your-bearer-token-here")}
+    user = User("your-username-here", authorization_header)
+    resp = flask.helpers.make_response();
+    save_login_session(user, resp);
+    return resp
     
 def user_is_friends_with(user_id, friend_user_id):
     return mongo.db.friends.find({"user_id": user_id, "friend_user_id": friend_user_id}).length > 0
