@@ -34,16 +34,23 @@
     font-size: 1.8rem;
   }
   
-  .nav-menu {
+  .nav-menu, .nav-menu-mobile {
     display: grid;
-    grid-template-columns: repeat(4, auto);
     grid-gap: 40px;
     list-style: none;
     text-align: center;
     width: 60vw;
     justify-content: end;
     margin-right: 5rem;
-    margin-top: 7.6rem;
+  }
+  
+  .nav-menu-mobile {
+    grid-template-columns: repeat(5, auto);
+  }
+  
+  .nav-menu:not(.nav-menu-mobile) {
+	grid-template-columns: repeat(4, auto);
+	max-height: 100px;
   }
   
   .nav-item {
@@ -51,8 +58,11 @@
   }
   
   .nav-links {
-    color: #fff;
     display: flex;
+  }
+  
+  .nav-links, .nav-links-mobile {
+    color: #fff;
     position: relative;
     align-items: center;
     text-decoration: none;
@@ -84,7 +94,7 @@
     color: #fff;
   }
   
-  .nav-links-mobile {
+  .nav-links-mobile, .nav-item-mobile {
     display: none;
   }
   
@@ -100,8 +110,9 @@
     .nav-menu {
       display: flex;
       flex-direction: column;
+	  justify-content: start;
       width: 100%;
-      height: 90vh;
+      height: auto;
       position: absolute;
       top: 80px;
       left: -100%;
@@ -117,14 +128,18 @@
       z-index: 1;
     }
   
-    .nav-links {
+    .nav-links, .nav-links-mobile {
       text-align: center;
       padding: 2rem;
       width: 100%;
       display: table;
     }
+	
+	.nav-item-mobile {
+		display: block;
+	}
   
-    .nav-links:hover {
+    .nav-links:hover, .nav-links-mobile:hover {
       background-color: #fc6e20;
       color: #1b1b1b;
       border-radius: 0;
