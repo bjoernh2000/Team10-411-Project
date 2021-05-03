@@ -21,7 +21,7 @@ load_dotenv()
 app = Flask(__name__)
 
 # If you change this, you'll also need to update it in the frontend code (fair warning!)
-SESSION_WORKAROUND_HEADER_NAME = "X-Flask-Session-Workaround-Because-Cross-Site-Cookies-Are-Death"
+SESSION_WORKAROUND_HEADER_NAME = "X-Flask-Session-Workaround"
 
 cors = CORS(app, resources={r"/*": {"origins": ["http://localhost:3000"]}}, support_credentials=True)
 app.config['CORS_SUPPORTS_CREDENTIALS'] = True;

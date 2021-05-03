@@ -1,7 +1,7 @@
 import React, { Component } from 'react'
 import './Feed.css'
 import TweetBox from './TweetBox'
-import axios from 'axios'
+import { axios } from '../../App.js';
 
 function Feed() {
     return(
