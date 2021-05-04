@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import './Profile.css';
 import { axios, backend_url } from '../../App.js';
 import Cookies from 'js-cookie';
+import { Text, Linking } from 'react-native';
 
 export class Profile extends Component {
 
@@ -13,7 +14,9 @@ export class Profile extends Component {
             image: null,
             followers: null,
             country: null,
-            current_user: null
+            current_user: null,
+            playlists: [],
+            playlist_link: []
         }
     }
 
@@ -21,11 +24,13 @@ export class Profile extends Component {
         axios.get(backend_url + "/getProfile")
             .then((response) => {
                 console.log(response.data);
-                this.setState({name: response.data.display_name});
-                this.setState({image: response.data.images[0].url});
-                this.setState({followers: response.data.followers.total})
-                this.setState({country: response.data.country})
-                this.setState({current_user: response.data.id})
+                this.setState({name: response.data.user.display_name});
+                this.setState({image: response.data.user.images[0].url});
+                this.setState({followers: response.data.user.followers.total})
+                this.setState({country: response.data.user.country})
+                this.setState({current_user: response.data.user.id})
+                this.setState({playlists: response.data.playlist.playlists.map((p) => p.name)})
+                this.setState({playlist_link: response.data.playlist.playlists.map((l) => l.external_urls["spotify"])})
             })
             .catch((error) => {
                 console.log(error);
@@ -34,6 +39,19 @@ export class Profile extends Component {
 
     render() {
         const { name } = this.state
+
+        const playlists_and_links = []
+        for (let i = 0; i < this.state.playlists.length; i++) {
+            playlists_and_links.push(
+                <li className='song-item'>
+                    <Text style={{color: 'white', fontSize: 25}}
+                        onPress={() => Linking.openURL(this.state.playlist_link[i])}>
+                        &nbsp;&nbsp;&nbsp;&nbsp; {this.state.playlists[i]}
+                    </Text>
+                </li>
+            )
+        }
+
         return (
             <div>
                 <div className='profile-container'>
@@ -62,23 +80,9 @@ export class Profile extends Component {
                             {this.state.name}'s Playlist
                         </h4>
                         <div className='songs'>
-                            <ul>
-                                <li className='song-item'>
-                                1&nbsp;&nbsp;&nbsp;&nbsp;Song Name #1
-                                </li>
-                                <li className='song-item'>
-                                2&nbsp;&nbsp;&nbsp;&nbsp;Song Name #2
-                                </li>
-                                <li className='song-item'>
-                                3&nbsp;&nbsp;&nbsp;&nbsp;Song Name #3
-                                </li>
-                                <li className='song-item'>
-                                4&nbsp;&nbsp;&nbsp;&nbsp;Song Name #4
-                                </li>
-                                <li className='song-item'>
-                                5&nbsp;&nbsp;&nbsp;&nbsp;Song Name #5
-                                </li>
-                            </ul>
+                            <ol>
+                                {playlists_and_links}
+                            </ol>
                         </div>
                     </div>
                 </div>
