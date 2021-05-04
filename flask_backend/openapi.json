@@ -4,9 +4,15 @@
     "title": "Bad DJ Backend",
     "version": "0.1.0"
   },
+  "security": [
+	  {
+		"FlaskWorkaroundAuth": []
+	  }
+  ],
   "paths": {
 	"/callback": {
 		"post": {
+			"security": [],
 			"summary": "Create a session using the access token from a Spotify OAuth callback.",
 			"requestBody": {
 				"content": {
@@ -48,9 +54,6 @@
 	"/getProfile": {
 		"get": {
 			"summary": "Get profile information for the currently logged-in user.",
-			"parameters": [
-				{ "$ref": "#/components/parameters/LoginSession" }
-			],
 			"responses": {
 				"200": {
 					"description": "A successful response",
@@ -74,9 +77,6 @@
 	"/notifications": {
 		"get": {
 			"summary": "Get a list containing the user's pending notifications.",
-			"parameters": [
-				{ "$ref": "#/components/parameters/LoginSession" }
-			],
 			"responses": {
 				"200": {
 					"description": "A successful response",
@@ -104,9 +104,6 @@
 	"/friends/recommendations": {
 		"get": {
 			"summary": "Get a list containing the user's friend recommendations.",
-			"parameters": [
-				{ "$ref": "#/components/parameters/LoginSession" }
-			],
 			"responses": {
 				"200": {
 					"description": "A successful response",
@@ -133,9 +130,6 @@
 	"/friends": {
 		"get": {
 			"summary": "Get a list containing the user's friends.",
-			"parameters": [
-				{ "$ref": "#/components/parameters/LoginSession" }
-			],
 			"responses": {
 				"200": {
 					"description": "A successful response",
@@ -163,7 +157,6 @@
 		"post": {
 			"summary": "Add another user as the user's friend (this is reciprocal).",
 			"parameters": [
-				{ "$ref": "#/components/parameters/LoginSession" },
 				{
 					"name": "friend_user_id",
 					"in": "query",
@@ -192,7 +185,6 @@
 		"post": {
 			"summary": "Remove another user from being this user's friend (this is reciprocal).",
 			"parameters": [
-				{ "$ref": "#/components/parameters/LoginSession" },
 				{
 					"name": "friend_user_id",
 					"in": "query",
@@ -221,7 +213,6 @@
 		"post": {
 			"summary": "Handle a notification button being pressed (eg. \"Accept\" or \"Reject\" on a friend request; \"Dismiss\" on an informational message).",
 			"parameters": [
-				{ "$ref": "#/components/parameters/LoginSession" },
 				{
 					"name": "notification_id",
 					"in": "query",
@@ -393,16 +384,12 @@
 			  "content": {}
 		  }
 	  },
-	  "parameters": {
-		  "LoginSession": {
-			"name": "X-Flask-Session-Workaround",
+	  "securitySchemes": {
+		"FlaskWorkaroundAuth": {
+			"type": "apiKey",
 			"in": "header",
-			"description": "Login session identifier, used to authenticate requests.",
-			"schema": {
-				"type": "string"
-			},
-			"required": true
-		  }
-	  }
+			"name": "X-Flask-Session-Workaround"
+		}
+	}
   }
 }
