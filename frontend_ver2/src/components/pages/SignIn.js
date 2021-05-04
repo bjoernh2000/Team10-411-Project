@@ -1,13 +1,14 @@
 import React from 'react'
 import { SpotifyAuth, Scopes } from 'react-spotify-auth'
+import { frontend_url, spotify_client_id } from '../../App.js';
 import 'react-spotify-auth/dist/index.css'
 
 function SignIn() {
     return (
         <div className='sign-in'>
             <SpotifyAuth
-                            redirectUri='http://localhost:3000/callback'
-                            clientID='578597110fa642daaef83cd9c122d1d9'
+                            redirectUri= {`${frontend_url}/callback`}
+                            clientID={spotify_client_id}
                             scopes={[Scopes.userReadPrivate, Scopes.userReadEmail]}
                         />
         </div>

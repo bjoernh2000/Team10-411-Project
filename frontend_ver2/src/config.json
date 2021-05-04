@@ -1,0 +1,27 @@
+{
+	
+	"_description": [
+		
+		"Set the URLs for the frontend / backend / mongodb database."
+		
+	],
+	
+	"_comment": [
+	
+		"Note: This file is read by both the frontend and the backend; it's just here to stop",
+		"      nodejs from complaining about not allowing you to load files from outside the",
+		"      src directory."
+	],
+	
+	"FRONTEND_URL": "http://localhost:3000",
+	"FRONTEND_DOMAIN": "localhost",
+
+	"BACKEND_URL": "http://localhost:8080",
+
+	"MONGODB_URL": "mongodb://localhost:27017/BadDJDatabase",
+	
+	"SPOTIFY_CLIENT_ID": "578597110fa642daaef83cd9c122d1d9"
+	
+}
+
+

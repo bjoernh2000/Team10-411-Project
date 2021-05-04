@@ -1,16 +1,18 @@
 import React, {Component} from 'react';
 import { SpotifyApiContext } from 'react-spotify-api';
 import Cookies from 'js-cookie';
-import axios from 'axios';
+import { axios, backend_url } from '../App.js';
 import { getHash } from './getHash'
 
 export class Callback extends Component {
 
     sendToken(token) {
-        let endpoint = "http://127.0.0.1:8080/callback"
-            axios.post(endpoint, {token:token}, {headers: {'Content-Type': 'application/json'}})
+		
+		axios.defaults.withCredentials = true;
+        let endpoint = backend_url + "/callback"
+            axios.post(endpoint, {token:token}, {headers: {'Content-Type': 'application/json'}}, {withCredentials: true})
             .then((resp) => {
-                console.log(resp);
+				Cookies.set('flask-session-workaround', resp.headers["x-flask-session-workaround"]);
             })
             .catch((err) => {
                 console.log(err);

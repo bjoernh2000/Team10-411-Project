@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import './Profile.css';
-import axios from 'axios';
+import { axios, backend_url } from '../../App.js';
+import Cookies from 'js-cookie';
 
 export class Profile extends Component {
 
@@ -13,7 +14,7 @@ export class Profile extends Component {
     }
 
     componentDidMount() {
-        axios.get("http://127.0.0.1:8080/getProfile")
+        axios.get(backend_url + "/getProfile")
             .then((response) => {
                 console.log(response);
             })
