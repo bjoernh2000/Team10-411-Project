@@ -1,0 +1,396 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Bad DJ Backend API",
+	"description": "Backend API for the Bad DJ website.",
+    "version": "0.1.0"
+  },
+  "security": [
+	  {
+		"FlaskWorkaroundAuth": []
+	  }
+  ],
+  "paths": {
+	"/callback": {
+		"post": {
+			"security": [],
+			"summary": "Create a session using the access token from a Spotify OAuth callback.",
+			"requestBody": {
+				"content": {
+					"application/json": {
+						"schema": {
+							"type": "object",
+							"properties": {
+								"token": {
+									"description": "Spotify OAuth token for the current user",
+									"type": "string"
+								}
+							},
+							"required": [ "token" ]
+						}
+					}
+				},
+				"required": true
+			},
+			"responses": {
+				"200": {
+					"description": "A session was created successfully.",
+					"content": {},
+					"headers": {
+						"X-Flask-Session-Workaround": {
+							"description": "Login session identifier, used to authenticate requests.",
+							"schema": {
+								"type": "string"
+							}
+						}
+					}
+				},
+				"500": {
+					"description": "The access token was invalid.",
+					"content": {}
+				}
+			}
+		}
+	},
+	"/getProfile": {
+		"get": {
+			"summary": "Get profile information for the currently logged-in user.",
+			"responses": {
+				"200": {
+					"description": "A successful response",
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/UserProfile"
+							}
+						}
+					}
+				},
+				"401": {
+					"$ref": "#/components/responses/Unauthorized"
+				},
+				"500": {
+					"$ref": "#/components/responses/InternalServerError"
+				}
+			}
+		}
+	},
+	"/notifications": {
+		"get": {
+			"summary": "Get a list containing the user's pending notifications.",
+			"responses": {
+				"200": {
+					"description": "A successful response",
+					"content": {
+						"application/json": {
+							"schema": {
+								"description": "A list of notifications",
+								"type": "array",
+								"items": {
+									"$ref": "#/components/schemas/Notification"
+								}
+							}
+						}
+					}
+				},
+				"401": {
+					"$ref": "#/components/responses/Unauthorized"
+				},
+				"500": {
+					"$ref": "#/components/responses/InternalServerError"
+				}
+			}
+		}
+	},
+	"/friends/recommendations": {
+		"get": {
+			"summary": "Get a list containing the user's friend recommendations.",
+			"responses": {
+				"200": {
+					"description": "A successful response",
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "array",
+								"items": {
+									"$ref": "#/components/schemas/FriendRecommendation"
+								}
+							}
+						}
+					}
+				},
+				"401": {
+					"$ref": "#/components/responses/Unauthorized"
+				},
+				"500": {
+					"$ref": "#/components/responses/InternalServerError"
+				}
+			}
+		}
+	},
+	"/friends": {
+		"get": {
+			"summary": "Get a list containing the user's friends.",
+			"responses": {
+				"200": {
+					"description": "A successful response",
+					"content": {
+						"application/json": {
+							"schema": {
+								"type": "array",
+								"items": {
+									"$ref": "#/components/schemas/UserId"
+								}
+							}
+						}
+					}
+				},
+				"401": {
+					"$ref": "#/components/responses/Unauthorized"
+				},
+				"500": {
+					"$ref": "#/components/responses/InternalServerError"
+				}
+			}
+		}
+	},
+	"/friends/add": {
+		"post": {
+			"summary": "Add another user as the user's friend (this is reciprocal).",
+			"parameters": [
+				{
+					"name": "friend_user_id",
+					"in": "query",
+					"description": "User ID of the friend to add",
+					"schema": {
+						"$ref": "#/components/schemas/UserId"
+					},
+					"required": true
+				}
+			],
+			"responses": {
+				"204": {
+					"description": "The friend was either added successfully, or already exists.",
+					"content": {}
+				},
+				"401": {
+					"$ref": "#/components/responses/Unauthorized"
+				},
+				"500": {
+					"$ref": "#/components/responses/InternalServerError"
+				}
+			}
+		}
+	},
+	"/friends/remove": {
+		"post": {
+			"summary": "Remove another user from being this user's friend (this is reciprocal).",
+			"parameters": [
+				{
+					"name": "friend_user_id",
+					"in": "query",
+					"description": "User ID of the friend to remove",
+					"schema": {
+						"$ref": "#/components/schemas/UserId"
+					},
+					"required": true
+				}
+			],
+			"responses": {
+				"204": {
+					"description": "The friend was removed successfully.",
+					"content": {}
+				},
+				"401": {
+					"$ref": "#/components/responses/Unauthorized"
+				},
+				"500": {
+					"$ref": "#/components/responses/InternalServerError"
+				}
+			}
+		}
+	},
+	"/notification_button_pressed": {
+		"post": {
+			"summary": "Handle a notification button being pressed.",
+			"parameters": [
+				{
+					"name": "notification_id",
+					"in": "query",
+					"description": "ID of the notification a button was pressed for",
+					"schema": {
+						"type": "string"
+					},
+					"required": true
+				},
+				{
+					"name": "button",
+					"in": "query",
+					"description": "What button was pressed (currently ignored)",
+					"schema": {
+						"type": "string",
+						"example": "Dismiss"
+					},
+					"required": true
+				}
+			],
+			"responses": {
+				"204": {
+					"description": "A successful response.",
+					"content": {}
+				},
+				"401": {
+					"$ref": "#/components/responses/Unauthorized"
+				},
+				"500": {
+					"$ref": "#/components/responses/InternalServerError"
+				}
+			}
+		}
+	}
+  },
+  "components": {
+	  "schemas": {
+		  "UserId": {
+			  "type": "string",
+			  "description": "A user's Spotify username",
+			  "example": "musiclover8000"
+		  },
+		  "UserProfile": {
+			  "type": "object",
+			  "description": "A user profile object as returned by Spotify's /me API endpoint",
+			  "example": {
+					"country": "SE",
+					"display_name": "JM Wizzler",
+					"email": "email@example.com",
+					"external_urls": {
+						"spotify": "https://open.spotify.com/user/wizzler"
+					},
+					"followers": {
+						"href": null,
+						"total": 3829
+					},
+					"href": "https://api.spotify.com/v1/users/wizzler",
+					"id": "wizzler",
+					"images": [
+						{
+							"height": null,
+							"url": "https://fbcdn-profile-a.akamaihd.net/hprofile-ak-frc3/t1.0-1/1970403_10152215092574354_1798272330_n.jpg",
+							"width": null
+						}
+					],
+					"product": "premium",
+					"type": "user",
+					"uri": "spotify:user:wizzler"
+			  },
+			  "properties": {
+				  "country": { "type": "integer" },
+				  "display_name": { "type": "string" },
+				  "email": { "type": "string" },
+				  "external_urls": {
+					  "type": "array",
+					  "items": { "type": "string" }
+				  },
+				  "followers": {
+					  "type": "object",
+					  "properties": { 
+						"href": { "type": "string" },
+						"total": { "type": "integer" }
+					  }
+				  },
+				  "href": { "type": "string" },
+				  "id": { "type": "string" },
+				  "images": {
+					  "type": "array",
+					  "items": {
+						  "type": "object",
+						  "properties": {
+							  "width": { "type": "integer" },
+							  "height": { "type": "integer" },
+							  "url": { "type": "string" }
+						  }
+					  }
+				  },
+				  "product": { "type": "string" },
+				  "type": { "type": "string" },
+				  "uri": { "type": "string" }
+			  }
+		  },
+		  "Notification": {
+			  "type": "object",
+			  "description": "A notification",
+			  "example": {
+				  "user_id": "musiclover8000",
+				  "notification_id": "-4jV-zXaNxZ-6ZdvuOPfwgbjptwnaLTk876ZuCIqNfk",
+				  "text": "You are the user of the month!",
+				  "type": "NOTIFICATION",
+				  "timestamp": 1620154851324
+			  },
+			  "properties": {
+				  "notification_id": {
+					  "description": "An ID that uniquely identifies this notification",
+					  "type": "string"
+				  },
+				  "user_id": {
+					  "description": "The user this notification was sent to",
+					  "$ref": "#/components/schemas/UserId"
+				  },
+				  "text": {
+					  "description": "The text content to be displayed for this notification",
+					  "type": "string"
+				  },
+				  "type": {
+					  "description": "The type of this notification, used to control available response options",
+					  "type": "string",
+					  "enum": [
+						"NOTIFICATION",
+						"FRIEND_REQUEST"
+					  ]
+				  },
+				  "timestamp": {
+					  "description": "Time this notification was posted to the backend, expressed in milliseconds since the UNIX Epoch",
+					  "type": "integer"
+				  }
+			  },
+			  "required": [
+				"user_id", "text", "type", "timestamp"
+			  ]
+		  },
+		"FriendRecommendation": {
+			"type": "object",
+			"description": "Friend recommendation info on a single user, identifying their estimated musical compatibility with the current user",
+			"properties": {
+				"user_id": {
+					"description": "The user this friend recommendation is about",
+					"$ref": "#/components/schemas/UserId"
+				},
+				"similarity_score": {
+					"description": "Numerical representation of this user's musical similarity to the current user",
+					"type": "number"
+				}
+			},
+			"required": [
+				"user_id",
+				"similarity_score"
+			]
+		}
+	  },
+	  "responses": {
+		  "Unauthorized": {
+			  "description": "Unauthorized: you are not logged in, and this endpoint can only be accessed by logged-in users. Please log-in and try again.",
+			  "content": {}
+		  },
+		  "InternalServerError": {
+			  "description": "An internal server error occured. First check that you passed the necessary parameters with valid values, then if everything is okay there look at the back-end code to see what the problem is.",
+			  "content": {}
+		  }
+	  },
+	  "securitySchemes": {
+		"FlaskWorkaroundAuth": {
+			"type": "apiKey",
+			"in": "header",
+			"name": "X-Flask-Session-Workaround"
+		}
+	}
+  }
+}

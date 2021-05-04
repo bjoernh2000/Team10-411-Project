@@ -3,6 +3,7 @@ import flask.helpers
 from flask_cors import CORS, cross_origin
 from flask_pymongo import PyMongo
 from flask.sessions import SecureCookieSessionInterface
+from flask import send_from_directory
 
 import json
 from urllib.parse import quote
@@ -12,6 +13,7 @@ import last_fm_similarity
 from dotenv import load_dotenv
 from bson import json_util
 import secrets
+import time
 
 from user import User
 
@@ -103,7 +105,7 @@ def login_workaround(request):
     return session_store[session_identifier]
 
 def save_login_session(user, resp):
-    session_identifier = secrets.token_urlsafe(128)
+    session_identifier = secrets.token_hex(128)
     session_store[session_identifier] = user
     resp.headers.add(SESSION_WORKAROUND_HEADER_NAME, session_identifier)
     return session_identifier
@@ -236,7 +238,7 @@ def getProfile(current_user):
 @login_required
 def notifications(current_user):
     user_id = current_user.user_id
-    notifications = [x for x in mongo.db.notifications.aggregate([{"$match": {"user_id": user_id}}, {"$sort": {"timestamp": -1}}])]
+    notifications = [x for x in mongo.db.notifications.aggregate([{"$match": {"user_id": user_id}}, {"$sort": {"timestamp": -1}}, {"$project": {"_id": 0}}])]
     return jsonify(notifications)
 
 @app.route("/friends/recommendations")
@@ -245,7 +247,7 @@ def notifications(current_user):
 def get_friend_recommendations(current_user):
     user_id = current_user.user_id
     friend_recommendations = last_fm_similarity.getSimilarUsers(mongo, current_user, True)
-    friend_recommendations = [{"user_id": user_id, "similarity_score": similarity_score} for (user_id, similarity_score) in friend_recommendations if not user_is_friends_with(user_id, x)]
+    friend_recommendations = [{"user_id": other_user_id, "similarity_score": similarity_score} for (other_user_id, similarity_score) in friend_recommendations if not user_is_friends_with(user_id, other_user_id)]
     return jsonify(friend_recommendations)
 
 @app.route("/friends")
@@ -253,27 +255,36 @@ def get_friend_recommendations(current_user):
 @login_required
 def get_friends(current_user):
     user_id = current_user.user_id
-    return [x.friend_user_id for x in mongo.db.friends.find({"user_id": user_id}, {"_id":0, "friend_user_id": 1})]
+    friends1 = [x["friend_user_id"] for x in mongo.db.friends.find({"user_id": user_id}, {"_id":0, "friend_user_id": 1})]
+    friends2 = [x["user_id"] for x in mongo.db.friends.find({"friend_user_id": user_id}, {"_id":0, "user_id": 1})]
+    friends = [x for x in friends1 if x not in friends2]
+    return jsonify(friends)
 
-@app.route("/friends/add")
+@app.route("/friends/add", methods=["POST"])
 @cross_origin(origin=FRONTEND_DOMAIN, headers=SESSION_LOGIN_HEADERS)
 @login_required
 def add_friend(current_user):
     user_id = current_user.user_id
     friend_user_id = request.args["friend_user_id"]
-    mongo.db.friends.insert({"user_id": user_id, "friend_user_id": friend_user_id})
+    if not user_is_friends_with(user_id, friend_user_id):
+        mongo.db.friends.insert({"user_id": user_id, "friend_user_id": friend_user_id})
+        send_notification(user_id, "You added {} as a friend!".format(friend_user_id), "NOTIFICATION");
+        send_notification(friend_user_id, "{} added you as a friend!".format(user_id), "NOTIFICATION");
     return ('', 204)
 
-@app.route("/friends/remove")
+@app.route("/friends/remove", methods=["POST"])
 @cross_origin(origin=FRONTEND_DOMAIN, headers=SESSION_LOGIN_HEADERS)
 @login_required
 def remove_friend(current_user):
     user_id = current_user.user_id
     friend_user_id = request.args["friend_user_id"]
     mongo.db.friends.remove({"user_id": user_id, "friend_user_id": friend_user_id})
+    mongo.db.friends.remove({"user_id": friend_user_id, "friend_user_id": user_id})
+    send_notification(user_id, "You stopped being friends with {} :(".format(friend_user_id), "NOTIFICATION");
+    send_notification(friend_user_id, "You were unfriended by {} :(".format(user_id), "NOTIFICATION");
     return ('', 204)
 	
-@app.route("/notification_button_pressed")
+@app.route("/notification_button_pressed", methods=["POST"])
 @cross_origin(origin=FRONTEND_DOMAIN, headers=SESSION_LOGIN_HEADERS)
 @login_required
 def notification_button_pressed(current_user):
@@ -293,16 +304,21 @@ def test_authme():
     return resp
     
 def user_is_friends_with(user_id, friend_user_id):
-    return mongo.db.friends.find({"user_id": user_id, "friend_user_id": friend_user_id}).length > 0
+    return (mongo.db.friends.find({"user_id": user_id, "friend_user_id": friend_user_id}).count() > 0) or (mongo.db.friends.find({"user_id": friend_user_id, "friend_user_id": user_id}).count() > 0)
 
 def send_notification(user_id, text, type):
     timestamp = time.time_ns() // 1_000_000
-    mongo.db.notifications.insert({"user_id": user_id, "text": text, "type": type, "timestamp": timestamp})
+    mongo.db.notifications.insert({"user_id": user_id, "notification_id": secrets.token_hex(32), "text": text, "type": type, "timestamp": timestamp})
     return ('', 204)
 
-@app.route("/test")
-def test():
-    return "{\"test\":1}"
+@app.route("/openapi.json")
+def openapi():
+    print("openapi.json called to get");
+    return send_from_directory('.', 'openapi.json')
+
+@app.route("/documentation")
+def documentation():
+    return send_from_directory('.', 'documentation.html')
 
 if __name__ == "__main__":
     app.run(port=PORT, debug=True)
