@@ -297,8 +297,8 @@ def notification_button_pressed(current_user):
 @app.route("/test_authme")
 @cross_origin(origin=FRONTEND_DOMAIN, headers=SESSION_LOGIN_HEADERS)
 def test_authme():
-    authorization_header = {"Authorization": "Bearer {}".format("BQAQaNH32KmEATkQqDBpVIUU7Jqrf93fpgBRl2DNZbgp3uBrsTT0xFnoQz974NuQc6st_l3-l5UqxQ5Z1IwQx-rQ2GHf5Y7e3bBQ6WVxyMNJbedP1vxoX_t1iN_kEJxY5VmCRL48ZDVlDLQYZ9Hm")}
-    user = User("f1sh3", authorization_header)
+    authorization_header = {"Authorization": "Bearer {}".format("your-bearer-token-here")}
+    user = User("your-username-here", authorization_header)
     resp = flask.helpers.make_response()
     save_login_session(user, resp)
     return resp
