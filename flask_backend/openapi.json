@@ -211,7 +211,7 @@
 	},
 	"/notification_button_pressed": {
 		"post": {
-			"summary": "Handle a notification button being pressed (eg. \"Accept\" or \"Reject\" on a friend request; \"Dismiss\" on an informational message).",
+			"summary": "Handle a notification button being pressed.",
 			"parameters": [
 				{
 					"name": "notification_id",
