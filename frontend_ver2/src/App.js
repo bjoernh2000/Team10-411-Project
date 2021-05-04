@@ -3,7 +3,7 @@ import { SpotifyAuth, Scopes } from 'react-spotify-auth'
 import './App.css';
 import Navbar from './components/Navbar';
 import Profile from './components/pages/Profile';
-import ShareMusic from './components/pages/ShareMusic';
+import AddFriend from './components/pages/AddFriend';
 import Feed from './components/pages/Feed';
 import Notifications from './components/pages/Notifications';
 import Callback from './components/Callback';
@@ -38,7 +38,7 @@ function App() {
         <Switch>
           <Route path='/' exact/>
           <Route path='/profile' component={Profile} />
-          <Route path='/share-music' component={ShareMusic} />
+          <Route path='/share-music' component={AddFriend} />
           <Route path='/feed' component={Feed} />
           <Route path='/notifications' component={Notifications} />
           <Route path='/sign-in' component={SignIn} />

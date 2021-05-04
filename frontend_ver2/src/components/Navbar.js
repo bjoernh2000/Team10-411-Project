@@ -53,7 +53,7 @@ function Navbar() {
                     </li>
                     <li className='nav-item'>
                         <Link to='/share-music' className='nav-links' onClick={closeMobileMenu}>
-                            More
+                            Add Friend
                         </Link>
                     </li>
                     <li className='nav-item-mobile'>

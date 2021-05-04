@@ -229,9 +229,13 @@ def getProfile(current_user):
     user_id = current_user.user_id
     user = mongo.db.users.find_one({"id":user_id})
     playlist = mongo.db.playlists.find_one({"id":user_id})
-    print(user, playlist)
-    return json.loads(json_util.dumps(user))
-
+    user_and_playlist = {
+        "user": user,
+        "playlist": playlist
+    }
+    #return json.loads(json_util.dumps(user)), json.loads(json_util.dumps(playlist))
+    print(json_util.dumps(user_and_playlist))
+    return json_util.dumps(user_and_playlist)
 
 @app.route("/notifications", methods=["GET"])
 @cross_origin(origin=FRONTEND_DOMAIN, headers=SESSION_LOGIN_HEADERS)
