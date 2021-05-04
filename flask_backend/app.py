@@ -15,6 +15,8 @@ import secrets
 
 from user import User
 
+PORT = 8080
+
 load_dotenv()
 
 app = Flask(__name__)
@@ -35,11 +37,11 @@ BACKEND_URL_FULL = app_config["BACKEND_URL"]
 DATABASE_URL_FULL = app_config["MONGODB_URL"]
 
 cors = CORS(app, resources={r"/*": {"origins": [FRONTEND_URL_FULL]}}, support_credentials=True)
-app.config['CORS_SUPPORTS_CREDENTIALS'] = True;
-app.config['CORS_HEADERS'] = ['Content-Type', SESSION_WORKAROUND_HEADER_NAME];
-app.config['CORS_EXPOSE_HEADERS'] = SESSION_WORKAROUND_HEADER_NAME;
-app.config['CORS_ALLOW_HEADERS'] = SESSION_WORKAROUND_HEADER_NAME;
-app.config['CORS_ORIGINS'] = FRONTEND_URL_FULL;
+app.config['CORS_SUPPORTS_CREDENTIALS'] = True
+app.config['CORS_HEADERS'] = ['Content-Type', 'content-type', SESSION_WORKAROUND_HEADER_NAME]
+app.config['CORS_EXPOSE_HEADERS'] = ['content-type', SESSION_WORKAROUND_HEADER_NAME]
+app.config['CORS_ALLOW_HEADERS'] = ['content-type', SESSION_WORKAROUND_HEADER_NAME]
+app.config['CORS_ORIGINS'] = FRONTEND_URL_FULL
 
 app.config["MONGO_URI"] = DATABASE_URL_FULL
 app.config["SECRET_KEY"] = "supersecretkey"
@@ -82,7 +84,7 @@ auth_query_parameters = {
     "client_id": CLIENT_ID
 }
 
-session_store = {};
+session_store = {}
 
 
 def isUnique(user_id):
@@ -103,7 +105,6 @@ def login_workaround(request):
 def save_login_session(user, resp):
     session_identifier = secrets.token_urlsafe(128)
     session_store[session_identifier] = user
-    resp.headers.add('Access-Control-Allow-Origin', FRONTEND_DOMAIN)
     resp.headers.add(SESSION_WORKAROUND_HEADER_NAME, session_identifier)
     return session_identifier
 
@@ -117,7 +118,7 @@ def login_required(func):
     wrapper.__name__ = func.__name__
     return wrapper
 
-SESSION_LOGIN_HEADERS = ['Content-Type','Authorization',SESSION_WORKAROUND_HEADER_NAME]
+SESSION_LOGIN_HEADERS = ['Content-Type','content-type', 'Authorization', SESSION_WORKAROUND_HEADER_NAME]
 
 # ======================================== TOKENS ===================================== #
 
@@ -175,19 +176,19 @@ def refreshToken(tokens, getNewTokens=getAccessToken):
     # And return it
     return {'access_token':access_token,'refresh_token':refresh_token}
 
-tokens = getAccessToken()
-access_token = tokens['access_token']
-refresh_token = tokens['refresh_token']
-tokens = refreshToken(tokens)
+# tokens = getAccessToken()
+# access_token = tokens['access_token']
+# refresh_token = tokens['refresh_token']
+# tokens = refreshToken(tokens)
 
 # ============================ OAUTH ================================= #
 @app.route("/callback", methods=["POST"])
-@cross_origin(origin=FRONTEND_DOMAIN, headers=SESSION_LOGIN_HEADERS)
+@cross_origin(origin=FRONTEND_URL_FULL, headers=SESSION_LOGIN_HEADERS)
 def callbackv2():
     print("Callback was called!")
     access_token = request.get_json().get("token")
 
-    # Auth Step 6: Use the access token to access Spotify API
+    # Use the access token to access Spotify API
     authorization_header = {"Authorization": "Bearer {}".format(access_token)}
 
     # Get profile data
@@ -205,9 +206,9 @@ def callbackv2():
     display_arr = [profile_data] + playlist_data["items"]
 
     # Make a user, make a session identifier, and persist them so we can restore the session on future calls
-    resp = flask.helpers.make_response();
+    resp = flask.helpers.make_response()
     user = User(profile_data["id"], authorization_header)
-    save_login_session(user, resp);
+    save_login_session(user, resp)
     
     # dont add every time
     if isUnique(profile_data["id"]):
@@ -287,8 +288,8 @@ def notification_button_pressed(current_user):
 def test_authme():
     authorization_header = {"Authorization": "Bearer {}".format("your-bearer-token-here")}
     user = User("your-username-here", authorization_header)
-    resp = flask.helpers.make_response();
-    save_login_session(user, resp);
+    resp = flask.helpers.make_response()
+    save_login_session(user, resp)
     return resp
     
 def user_is_friends_with(user_id, friend_user_id):
