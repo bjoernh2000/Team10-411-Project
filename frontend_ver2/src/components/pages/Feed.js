@@ -8,7 +8,7 @@ function Feed() {
         <div className = "feed">
             <div className = "feed__header">
             <h2>
-                Home, Bernie
+                Hello
             </h2>
 
             <TweetBox />

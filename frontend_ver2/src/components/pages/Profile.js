@@ -9,14 +9,23 @@ export class Profile extends Component {
         super(props)
 
         this.state = {
-            name: ''
+            name: '',
+            image: null,
+            followers: null,
+            country: null,
+            current_user: null
         }
     }
 
     componentDidMount() {
         axios.get(backend_url + "/getProfile")
             .then((response) => {
-                console.log(response);
+                console.log(response.data);
+                this.setState({name: response.data.display_name});
+                this.setState({image: response.data.images[0].url});
+                this.setState({followers: response.data.followers.total})
+                this.setState({country: response.data.country})
+                this.setState({current_user: response.data.id})
             })
             .catch((error) => {
                 console.log(error);
@@ -24,23 +33,24 @@ export class Profile extends Component {
     }
 
     render() {
+        const { name } = this.state
         return (
             <div>
                 <div className='profile-container'>
                     <div className='profile-header'>
                         <div>
                             <img style={{width:"200px",height:"200px",borderRadius:"100px"}} 
-                            src="https://www.booksie.com/files/profiles/22/mr-anonymous.png" alt=""/>
+                            src= {this.state.image} alt=""/>
                         </div>
                         <div className='text'>
                             <div className='name'>
                                 <h4>
-                                    Della Lin
+                                   {this.state.name}
                                 </h4>
                             </div>
                             <div className='friends'>
                                 <h5>
-                                    7 playlists &nbsp;&nbsp;|&nbsp;&nbsp; 10 friends 
+                                    Country:  {this.state.country} &nbsp;&nbsp;|&nbsp;&nbsp; {this.state.followers} Followers
                                 </h5>
                             </div>
                         </div>
@@ -49,7 +59,7 @@ export class Profile extends Component {
                 <div className='bottom-container'>
                     <div className='main-playlist'>
                         <h4>
-                            Della's Playlist
+                            {this.state.name}'s Playlist
                         </h4>
                         <div className='songs'>
                             <ul>
