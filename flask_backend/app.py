@@ -255,7 +255,15 @@ def share_music(current_user):
     song_api_endpoint = "{0}/search?q={1}&type=track".format(SPOTIFY_API_URL, song_name)
     song_response = requests.get(song_api_endpoint, headers=authorization_header)
     songs = json.loads(song_response.text)
-    print(songs)
+    song = songs["tracks"]["items"][0]
+    print(song)
+    send_notification(user_id, "You shared {}!".format(song["name"]), "NOTIFICATION")
+    friends1 = [x["friend_user_id"] for x in mongo.db.friends.find({"user_id": user_id}, {"_id":0, "friend_user_id": 1})]
+    friends2 = [x["user_id"] for x in mongo.db.friends.find({"friend_user_id": user_id}, {"_id":0, "user_id": 1})]
+    friends = [x for x in friends1 if x not in friends2]
+    for friend in friends:
+        send_notification(user_id, "Your friend {0} shared {1}!".format(user_id,song["name"]), "NOTIFICATION")
+    mongo.db.sharing.insert({"user_id": user_id, "song":song})
     return jsonify(songs)
 
 @app.route("/friends/recommendations")
