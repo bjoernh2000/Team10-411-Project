@@ -282,7 +282,7 @@ def get_friends(current_user):
 @login_required
 def add_friend(current_user):
     user_id = current_user.user_id
-    friend_user_id = request.args["friend_user_id"]
+    friend_user_id = request.get_json().get("friend_user_id")
     if not user_is_friends_with(user_id, friend_user_id):
         mongo.db.friends.insert({"user_id": user_id, "friend_user_id": friend_user_id})
         send_notification(user_id, "You added {} as a friend!".format(friend_user_id), "NOTIFICATION");
@@ -294,7 +294,7 @@ def add_friend(current_user):
 @login_required
 def remove_friend(current_user):
     user_id = current_user.user_id
-    friend_user_id = request.args["friend_user_id"]
+    friend_user_id = request.get_json().get("friend_user_id")
     mongo.db.friends.remove({"user_id": user_id, "friend_user_id": friend_user_id})
     mongo.db.friends.remove({"user_id": friend_user_id, "friend_user_id": user_id})
     send_notification(user_id, "You stopped being friends with {} :(".format(friend_user_id), "NOTIFICATION");
@@ -307,7 +307,7 @@ def remove_friend(current_user):
 def notification_button_pressed(current_user):
     # TODO: consider doing something other than just removing the notification here
     user_id = current_user.user_id
-    notification_id = request.args["notification_id"]
+    notification_id = request.get_json().get("notification_id")
     mongo.db.notifications.remove({"user_id": user_id, "notification_id": notification_id})
     return ('', 204)
 
