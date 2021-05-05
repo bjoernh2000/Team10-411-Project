@@ -269,7 +269,7 @@ def share_music(current_user):
     friends = get_user_friends(user_id)
     for friend in friends:
         send_notification(user_id, "Your friend {0} shared {1}!".format(user_id,song["name"]), "NOTIFICATION")
-    mongo.db.sharing.insert({"user_id": user_id, "song":song})
+    mongo.db.sharing.insert({"user_id": user_id, "song":song, "timestamp": (time.time_ns() // 1_000_000)})
     return jsonify(songs)
 
 @app.route("/music_feed", methods=["GET"])
@@ -278,7 +278,15 @@ def share_music(current_user):
 def get_feed(current_user):
     user_id = current_user.user_id
     friends = get_user_friends(user_id)
-    feed = [x for x in mongo.db.sharing.find({},{"_id":0}) if x["user_id"] in friends]
+    feed = {}
+    for x in mongo.db.sharing.find({},{"_id":0}):
+        if not x["user_id"] in friends and x["user_id"] != user_id:
+            continue
+        timestamp = 0
+        if "timestamp" in x:
+            timestamp = x["timestamp"]
+        feed[timestamp] = x
+    feed = [value for key,value in sorted(feed.items(), reverse=True)]
     return jsonify(feed)
 
 @app.route("/friends/recommendations")

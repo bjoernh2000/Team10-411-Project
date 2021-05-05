@@ -75,6 +75,38 @@
 			}
 		}
 	},
+	"/music_feed": {
+		"get": {
+			"summary": "Get a list of shared songs that should be visible to this user.",
+			"responses": {
+				"200": {
+					"description": "A successful response",
+					"content": {
+						"application/json": {
+							"schema": {
+								"description": "A list of shared songs, ordered from most recent to least recent.",
+								"type": "array",
+								"items": {
+									"type": "object",
+									"properties": {
+										"user_id": { "type": "string" },
+										"timestamp": { "type": "integer" },
+										"song": { "$ref": "#/components/schemas/Song" }
+									}
+								}
+							}
+						}
+					}
+				},
+				"401": {
+					"$ref": "#/components/responses/Unauthorized"
+				},
+				"500": {
+					"$ref": "#/components/responses/InternalServerError"
+				}
+			}
+		}
+	},
 	"/notifications": {
 		"get": {
 			"summary": "Get a list containing the user's pending notifications.",
@@ -257,6 +289,45 @@
 				}
 			}
 		}
+	},
+	"/share_music": {
+		"post": {
+			"summary": "Share a song with a user's friends (posts to their music feed)",
+			"requestBody": {
+				"content": {
+					"application/json": {
+						"schema": {
+							"type": "object",
+							"properties": {
+								"song_name": {
+									"description": "Song to share (can be mixed song/artist, used as a search query)",
+									"type": "string"
+								}
+							},
+							"required": [ "song_name" ]
+						}
+					}
+				}
+			},
+			"responses": {
+				"200": {
+					"description": "A successful response.",
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/Song"
+							}
+						}
+					}
+				},
+				"401": {
+					"$ref": "#/components/responses/Unauthorized"
+				},
+				"500": {
+					"$ref": "#/components/responses/InternalServerError"
+				}
+			}
+		}
 	}
   },
   "components": {
@@ -383,6 +454,119 @@
 				"user_id",
 				"similarity_score"
 			]
+		},
+		"Song": {
+			"type": "object",
+			"description": "A song object as returned by Spotify's API",
+			"properties": {
+				"album": {
+					"type": "object",
+					"properties": {}
+				},
+				"artists": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"properties": {
+							"external_urls": {
+								"type": "object",
+								"properties": {}
+							},
+							"followers": {
+								"type": "object",
+								"properties": {}
+							},
+							"genres": {
+								"type": "array",
+								"items": { "type": "string" }
+							},
+							"href": {
+								"type": "string"
+							},
+							"id": {
+								"type": "string"
+							},
+							"images": {
+								"type": "array",
+								"items": {
+									"type": "object",
+									"properties": {}
+								}
+							},
+							"name": {
+								"type": "string"
+							},
+							"populatity": {
+								"type": "integer"
+							},
+							"type": {
+								"type": "string"
+							},
+							"uri": {
+								"type": "string"
+							}
+						}
+					}
+				},
+				"available_markets": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				},
+				"disc_number": {
+					"type": "integer"
+				},
+				"duration_ms": {
+					"type": "integer"
+				},
+				"explicit": {
+					"type": "boolean"
+				},
+				"external_ids": {
+					"type": "object",
+					"properties": {}
+				},
+				"external_urls": {
+					"type": "object",
+					"properties": {}
+				},
+				"href": {
+					"type": "string"
+				},
+				"id": {
+					"type": "string"
+				},
+				"is_local": {
+					"type": "boolean"
+				},
+				"is_playable": {
+					"type": "boolean"
+				},
+				"name": {
+					"type": "string"
+				},
+				"populatity": {
+					"type": "integer"
+				},
+				"preview_url": {
+					"type": "string"
+				},
+				"restrictions": {
+					"type": "object",
+					"properties": {}
+				},
+				"track_number": {
+					"type": "integer"
+				},
+				"type": {
+					"type": "string"
+				},
+				"uri": {
+					"type": "string"
+				}
+			},
+			"example": {}
 		}
 	  },
 	  "responses": {
