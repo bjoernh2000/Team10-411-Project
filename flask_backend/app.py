@@ -259,10 +259,12 @@ def get_friend_recommendations(current_user):
 @login_required
 def get_friends(current_user):
     user_id = current_user.user_id
-    friends1 = [x["friend_user_id"] for x in mongo.db.friends.find({"user_id": user_id}, {"_id":0, "friend_user_id": 1})]
-    friends2 = [x["user_id"] for x in mongo.db.friends.find({"friend_user_id": user_id}, {"_id":0, "user_id": 1})]
-    friends = [x for x in friends1 if x not in friends2]
-    return jsonify(friends)
+    friends = {}
+    for x in mongo.db.friends.find({"user_id": user_id}, {"_id":0, "friend_user_id": 1}):
+        friends[x["friend_user_id"]] = x["friend_user_id"]
+    for x in mongo.db.friends.find({"friend_user_id": user_id}, {"_id":0, "user_id": 1}):
+        friends[x["user_id"]] = x["user_id"]
+    return jsonify(list(friends.keys()))
 
 @app.route("/friends/add", methods=["POST"])
 @cross_origin(origin=FRONTEND_URL_FULL, headers=SESSION_LOGIN_HEADERS)
@@ -271,9 +273,8 @@ def add_friend(current_user):
     user_id = current_user.user_id
     friend_user_id = request.args["friend_user_id"]
     if not user_is_friends_with(user_id, friend_user_id):
-        mongo.db.friends.insert({"user_id": user_id, "friend_user_id": friend_user_id})
-        send_notification(user_id, "You added {} as a friend!".format(friend_user_id), "NOTIFICATION");
-        send_notification(friend_user_id, "{} added you as a friend!".format(user_id), "NOTIFICATION");
+        notification_id = send_notification(friend_user_id, "{} has sent you a friend request!".format(user_id), "FRIEND_REQUEST");
+        mongo.db.friendrequests.insert({"user_id": user_id, "friend_user_id": friend_user_id, "notification_id": notification_id});
     return ('', 204)
 
 @app.route("/friends/remove", methods=["POST"])
@@ -292,9 +293,23 @@ def remove_friend(current_user):
 @cross_origin(origin=FRONTEND_URL_FULL, headers=SESSION_LOGIN_HEADERS)
 @login_required
 def notification_button_pressed(current_user):
-    # TODO: consider doing something other than just removing the notification here
-    user_id = current_user.user_id
+    button = request.args["button"]
+    print("")
     notification_id = request.args["notification_id"]
+    user_id = current_user.user_id
+    print("Pressed button was '{}' notificaiton id '{}'".format(button, notification_id))
+    if button == "Accept":
+        friend_request = mongo.db.friendrequests.find({"friend_user_id": user_id, "notification_id": notification_id});
+        if friend_request.count() > 0:
+            friend_request = friend_request[0];
+            print("Found friend request user_id '{}' friend_id '{}' notificaiton_id '{}'".format(friend_request["user_id"], friend_request["friend_user_id"], friend_request["notification_id"]))
+            mongo.db.friends.insert({"user_id": friend_request["user_id"], "friend_user_id": friend_request["friend_user_id"]});
+            send_notification(friend_request["user_id"], "'{}' accepted your friend request!".format(friend_request["friend_user_id"]), "NOTIFICATION");
+            send_notification(friend_request["friend_user_id"], "You are now friends with {}!".format(friend_request["user_id"]), "NOTIFICATION");
+        else:
+            print("Friend request to respond to was invalid :/");
+        mongo.db.friendrequests.remove({"friend_user_id": user_id, "notification_id": notification_id});
+    # Remove the notification
     mongo.db.notifications.remove({"user_id": user_id, "notification_id": notification_id})
     return ('', 204)
 
@@ -312,8 +327,9 @@ def user_is_friends_with(user_id, friend_user_id):
 
 def send_notification(user_id, text, type):
     timestamp = time.time_ns() // 1_000_000
-    mongo.db.notifications.insert({"user_id": user_id, "notification_id": secrets.token_hex(32), "text": text, "type": type, "timestamp": timestamp})
-    return ('', 204)
+    notification_id = secrets.token_hex(32)
+    mongo.db.notifications.insert({"user_id": user_id, "notification_id": notification_id, "text": text, "type": type, "timestamp": timestamp})
+    return notification_id
 
 @app.route("/openapi.json")
 def openapi():
