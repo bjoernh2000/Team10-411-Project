@@ -245,6 +245,27 @@ def notifications(current_user):
     notifications = [x for x in mongo.db.notifications.aggregate([{"$match": {"user_id": user_id}}, {"$sort": {"timestamp": -1}}, {"$project": {"_id": 0}}])]
     return jsonify(notifications)
 
+@app.route("/share_music", methods=["POST"])
+@cross_origin(origin=FRONTEND_URL_FULL, headers=SESSION_LOGIN_HEADERS)
+@login_required
+def share_music(current_user):
+    user_id = current_user.user_id
+    authorization_header = current_user.authorization_header
+    song_name = request.get_json().get("song_name")
+    song_api_endpoint = "{0}/search?q={1}&type=track".format(SPOTIFY_API_URL, song_name)
+    song_response = requests.get(song_api_endpoint, headers=authorization_header)
+    songs = json.loads(song_response.text)
+    song = songs["tracks"]["items"][0]
+    print(song)
+    send_notification(user_id, "You shared {}!".format(song["name"]), "NOTIFICATION")
+    friends1 = [x["friend_user_id"] for x in mongo.db.friends.find({"user_id": user_id}, {"_id":0, "friend_user_id": 1})]
+    friends2 = [x["user_id"] for x in mongo.db.friends.find({"friend_user_id": user_id}, {"_id":0, "user_id": 1})]
+    friends = [x for x in friends1 if x not in friends2]
+    for friend in friends:
+        send_notification(user_id, "Your friend {0} shared {1}!".format(user_id,song["name"]), "NOTIFICATION")
+    mongo.db.sharing.insert({"user_id": user_id, "song":song})
+    return jsonify(songs)
+
 @app.route("/friends/recommendations")
 @cross_origin(origin=FRONTEND_URL_FULL, headers=SESSION_LOGIN_HEADERS)
 @login_required
@@ -271,7 +292,7 @@ def get_friends(current_user):
 @login_required
 def add_friend(current_user):
     user_id = current_user.user_id
-    friend_user_id = request.args["friend_user_id"]
+    friend_user_id = request.get_json().get("friend_user_id")
     if not user_is_friends_with(user_id, friend_user_id):
         notification_id = send_notification(friend_user_id, "{} has sent you a friend request!".format(user_id), "FRIEND_REQUEST");
         mongo.db.friendrequests.insert({"user_id": user_id, "friend_user_id": friend_user_id, "notification_id": notification_id});
@@ -282,7 +303,7 @@ def add_friend(current_user):
 @login_required
 def remove_friend(current_user):
     user_id = current_user.user_id
-    friend_user_id = request.args["friend_user_id"]
+    friend_user_id = request.get_json().get("friend_user_id")
     mongo.db.friends.remove({"user_id": user_id, "friend_user_id": friend_user_id})
     mongo.db.friends.remove({"user_id": friend_user_id, "friend_user_id": user_id})
     send_notification(user_id, "You stopped being friends with {} :(".format(friend_user_id), "NOTIFICATION");

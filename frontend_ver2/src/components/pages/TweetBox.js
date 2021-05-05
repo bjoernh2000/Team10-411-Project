@@ -30,7 +30,7 @@ export class TweetBox extends Component {
     shareSong = e => {
         e.preventDefault()
         console.log(this.state)
-        axios.post(backend_url + "/getProfile", this.state)
+        axios.post(backend_url + "/share_music", {"song_name":this.state.songID}, {headers: {'Content-Type': 'application/json'}}, {withCredentials: true})
         .then(response => {
             console.log(response)
         })
@@ -44,14 +44,7 @@ export class TweetBox extends Component {
     }
 
     componentDidMount() {
-        axios.get(backend_url + "/getProfile")
-            .then((response) => {
-                console.log(response.data);
-                this.setState({image: response.data.images[0].url});
-            })
-            .catch((error) => {
-                console.log(error);
-            })
+
     }
 
     render() {
