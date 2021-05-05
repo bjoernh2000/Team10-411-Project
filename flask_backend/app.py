@@ -14,6 +14,7 @@ from dotenv import load_dotenv
 from bson import json_util
 import secrets
 import time
+import threading
 
 from user import User
 
@@ -197,15 +198,11 @@ def callbackv2():
     user_profile_api_endpoint = "{}/me".format(SPOTIFY_API_URL)
     profile_response = requests.get(user_profile_api_endpoint, headers=authorization_header)
     profile_data = json.loads(profile_response.text)
-    # stored_auths[profile_data["id"]] = authorization_header
 
     # Get user playlist data
     playlist_api_endpoint = "{}/playlists".format(profile_data["href"])
     playlists_response = requests.get(playlist_api_endpoint, headers=authorization_header)
     playlist_data = json.loads(playlists_response.text)
-
-    # Combine profile and playlist data to display
-    display_arr = [profile_data] + playlist_data["items"]
 
     # Make a user, make a session identifier, and persist them so we can restore the session on future calls
     resp = flask.helpers.make_response()
@@ -216,7 +213,18 @@ def callbackv2():
     if isUnique(profile_data["id"]):
         user_db_id = mongo.db.users.insert(profile_data)
         data = {"id":profile_data["id"], "playlists":playlist_data["items"]}
-        mongo.db.playlists.insert(data)
+    else:
+        # Update user's playlists when they log in
+        data = {"id":profile_data["id"], "playlists":playlist_data["items"]}
+        mongo.db.playlists.replace_one({"id":profile_data["id"]}, data)
+        
+    # Handle removing cached API calls that relate to this user's playlist contents
+    mongo.db.cache.remove({"wipe_on_login": profile_data["id"]})
+    
+    # Get user liked music data
+    #     done in a separate thread, because it can take a while
+    # Note that when finished, this will also update cached friend request info
+    threading.Thread(target = update_user_liked_music, args = (user,)).start()
         
     return resp
 
@@ -258,20 +266,35 @@ def share_music(current_user):
     song = songs["tracks"]["items"][0]
     print(song)
     send_notification(user_id, "You shared {}!".format(song["name"]), "NOTIFICATION")
-    friends1 = [x["friend_user_id"] for x in mongo.db.friends.find({"user_id": user_id}, {"_id":0, "friend_user_id": 1})]
-    friends2 = [x["user_id"] for x in mongo.db.friends.find({"friend_user_id": user_id}, {"_id":0, "user_id": 1})]
-    friends = [x for x in friends1 if x not in friends2]
+    friends = get_user_friends(user_id)
     for friend in friends:
         send_notification(user_id, "Your friend {0} shared {1}!".format(user_id,song["name"]), "NOTIFICATION")
-    mongo.db.sharing.insert({"user_id": user_id, "song":song})
+    mongo.db.sharing.insert({"user_id": user_id, "song":song, "timestamp": (time.time_ns() // 1_000_000)})
     return jsonify(songs)
+
+@app.route("/music_feed", methods=["GET"])
+@cross_origin(origin=FRONTEND_URL_FULL, headers=SESSION_LOGIN_HEADERS)
+@login_required
+def get_feed(current_user):
+    user_id = current_user.user_id
+    friends = get_user_friends(user_id)
+    feed = {}
+    for x in mongo.db.sharing.find({},{"_id":0}):
+        if not x["user_id"] in friends and x["user_id"] != user_id:
+            continue
+        timestamp = 0
+        if "timestamp" in x:
+            timestamp = x["timestamp"]
+        feed[timestamp] = x
+    feed = [value for key,value in sorted(feed.items(), reverse=True)]
+    return jsonify(feed)
 
 @app.route("/friends/recommendations")
 @cross_origin(origin=FRONTEND_URL_FULL, headers=SESSION_LOGIN_HEADERS)
 @login_required
 def get_friend_recommendations(current_user):
     user_id = current_user.user_id
-    friend_recommendations = last_fm_similarity.getSimilarUsers(mongo, current_user, True)
+    friend_recommendations = last_fm_similarity.getSimilarUsers(mongo, current_user, include_scores = True, only_use_cached_data = True)
     friend_recommendations = [{"user_id": other_user_id, "similarity_score": similarity_score} for (other_user_id, similarity_score) in friend_recommendations if not user_is_friends_with(user_id, other_user_id)]
     return jsonify(friend_recommendations)
 
@@ -280,12 +303,7 @@ def get_friend_recommendations(current_user):
 @login_required
 def get_friends(current_user):
     user_id = current_user.user_id
-    friends = {}
-    for x in mongo.db.friends.find({"user_id": user_id}, {"_id":0, "friend_user_id": 1}):
-        friends[x["friend_user_id"]] = x["friend_user_id"]
-    for x in mongo.db.friends.find({"friend_user_id": user_id}, {"_id":0, "user_id": 1}):
-        friends[x["user_id"]] = x["user_id"]
-    return jsonify(list(friends.keys()))
+    return jsonify(get_user_friends(user_id))
 
 @app.route("/friends/add", methods=["POST"])
 @cross_origin(origin=FRONTEND_URL_FULL, headers=SESSION_LOGIN_HEADERS)
@@ -351,6 +369,35 @@ def send_notification(user_id, text, type):
     notification_id = secrets.token_hex(32)
     mongo.db.notifications.insert({"user_id": user_id, "notification_id": notification_id, "text": text, "type": type, "timestamp": timestamp})
     return notification_id
+
+def get_user_friends(user_id):
+    friends = {}
+    for x in mongo.db.friends.find({"user_id": user_id}, {"_id":0, "friend_user_id": 1}):
+        friends[x["friend_user_id"]] = x["friend_user_id"]
+    for x in mongo.db.friends.find({"friend_user_id": user_id}, {"_id":0, "user_id": 1}):
+        friends[x["user_id"]] = x["user_id"]
+    return list(friends.keys())
+    
+def update_user_liked_music(user):
+    liked_music_api_endpoint = "{}/me/tracks".format(SPOTIFY_API_URL)
+    liked_music_data = []
+    while liked_music_api_endpoint is not None:
+        liked_music_response = requests.get(liked_music_api_endpoint, headers=user.authorization_header)
+        liked_music_data_partial = json.loads(liked_music_response.text)
+        print("Liked music partial response {}", liked_music_data_partial)
+        if "items" in liked_music_data_partial:
+            liked_music_data.extend([x for x in liked_music_data_partial["items"]])
+        if "next" in liked_music_data_partial:
+            liked_music_api_endpoint = liked_music_data_partial["next"]
+        else:
+            liked_music_api_endpoint = None
+    data = {"id":user.user_id, "liked_songs":liked_music_data}
+    if mongo.db.liked_songs.find({"id":user.user_id}).count() > 0:
+        mongo.db.liked_songs.replace_one({"id":user.user_id}, data)
+    else:
+        mongo.db.liked_songs.insert(data)
+    # And now update friend requests with the new information
+    last_fm_similarity.getSimilarUsers(mongo, user, only_use_cached_data = False)
 
 @app.route("/openapi.json")
 def openapi():
