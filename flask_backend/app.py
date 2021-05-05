@@ -245,6 +245,19 @@ def notifications(current_user):
     notifications = [x for x in mongo.db.notifications.aggregate([{"$match": {"user_id": user_id}}, {"$sort": {"timestamp": -1}}, {"$project": {"_id": 0}}])]
     return jsonify(notifications)
 
+@app.route("/share_music", methods=["POST"])
+@cross_origin(origin=FRONTEND_URL_FULL, headers=SESSION_LOGIN_HEADERS)
+@login_required
+def share_music(current_user):
+    user_id = current_user.user_id
+    authorization_header = current_user.authorization_header
+    song_name = request.get_json().get("song_name")
+    song_api_endpoint = "{0}/search?q={1}&type=track".format(SPOTIFY_API_URL, song_name)
+    song_response = requests.get(song_api_endpoint, headers=authorization_header)
+    songs = json.loads(song_response.text)
+    print(songs)
+    return jsonify(songs)
+
 @app.route("/friends/recommendations")
 @cross_origin(origin=FRONTEND_URL_FULL, headers=SESSION_LOGIN_HEADERS)
 @login_required
