@@ -3,6 +3,7 @@ import { SpotifyApiContext } from 'react-spotify-api';
 import Cookies from 'js-cookie';
 import { axios, backend_url } from '../App.js';
 import { getHash } from './getHash'
+import { Redirect } from 'react-router'
 
 export class Callback extends Component {
 
@@ -29,9 +30,10 @@ export class Callback extends Component {
         return (
             <div>
                 <SpotifyApiContext.Provider value={token}>
-                <p>You are authorized with token: {token}</p>
+                {/* <p>You are authorized with token: {token}</p> */}
                 {this.sendToken(token)}
             </SpotifyApiContext.Provider>
+            <Redirect to='/profile'/>
             </div>
         )
     }
