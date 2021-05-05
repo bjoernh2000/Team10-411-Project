@@ -25,7 +25,11 @@ export class Profile extends Component {
             .then((response) => {
                 console.log(response.data);
                 this.setState({name: response.data.user.display_name});
-                this.setState({image: response.data.user.images[0].url});
+                if (response.data.user.images[0] != null){
+                    this.setState({image: response.data.user.images[0].url});
+                } else {
+                    this.setState({image: 'https://www.booksie.com/files/profiles/22/mr-anonymous.png'})
+                }
                 this.setState({followers: response.data.user.followers.total})
                 this.setState({country: response.data.user.country})
                 this.setState({current_user: response.data.user.id})

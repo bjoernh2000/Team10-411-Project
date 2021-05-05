@@ -223,7 +223,7 @@ def callbackv2():
 # =============================================================== #
 
 @app.route("/getProfile", methods=["GET"])
-@cross_origin(origin=FRONTEND_DOMAIN,headers=SESSION_LOGIN_HEADERS)
+@cross_origin(origin=FRONTEND_URL_FULL,headers=SESSION_LOGIN_HEADERS)
 @login_required
 def getProfile(current_user):
     user_id = current_user.user_id
@@ -238,7 +238,7 @@ def getProfile(current_user):
     return json_util.dumps(user_and_playlist)
 
 @app.route("/notifications", methods=["GET"])
-@cross_origin(origin=FRONTEND_DOMAIN, headers=SESSION_LOGIN_HEADERS)
+@cross_origin(origin=FRONTEND_URL_FULL, headers=SESSION_LOGIN_HEADERS)
 @login_required
 def notifications(current_user):
     user_id = current_user.user_id
@@ -246,7 +246,7 @@ def notifications(current_user):
     return jsonify(notifications)
 
 @app.route("/friends/recommendations")
-@cross_origin(origin=FRONTEND_DOMAIN, headers=SESSION_LOGIN_HEADERS)
+@cross_origin(origin=FRONTEND_URL_FULL, headers=SESSION_LOGIN_HEADERS)
 @login_required
 def get_friend_recommendations(current_user):
     user_id = current_user.user_id
@@ -255,7 +255,7 @@ def get_friend_recommendations(current_user):
     return jsonify(friend_recommendations)
 
 @app.route("/friends")
-@cross_origin(origin=FRONTEND_DOMAIN, headers=SESSION_LOGIN_HEADERS)
+@cross_origin(origin=FRONTEND_URL_FULL, headers=SESSION_LOGIN_HEADERS)
 @login_required
 def get_friends(current_user):
     user_id = current_user.user_id
@@ -265,7 +265,7 @@ def get_friends(current_user):
     return jsonify(friends)
 
 @app.route("/friends/add", methods=["POST"])
-@cross_origin(origin=FRONTEND_DOMAIN, headers=SESSION_LOGIN_HEADERS)
+@cross_origin(origin=FRONTEND_URL_FULL, headers=SESSION_LOGIN_HEADERS)
 @login_required
 def add_friend(current_user):
     user_id = current_user.user_id
@@ -277,7 +277,7 @@ def add_friend(current_user):
     return ('', 204)
 
 @app.route("/friends/remove", methods=["POST"])
-@cross_origin(origin=FRONTEND_DOMAIN, headers=SESSION_LOGIN_HEADERS)
+@cross_origin(origin=FRONTEND_URL_FULL, headers=SESSION_LOGIN_HEADERS)
 @login_required
 def remove_friend(current_user):
     user_id = current_user.user_id
@@ -289,7 +289,7 @@ def remove_friend(current_user):
     return ('', 204)
 	
 @app.route("/notification_button_pressed", methods=["POST"])
-@cross_origin(origin=FRONTEND_DOMAIN, headers=SESSION_LOGIN_HEADERS)
+@cross_origin(origin=FRONTEND_URL_FULL, headers=SESSION_LOGIN_HEADERS)
 @login_required
 def notification_button_pressed(current_user):
     # TODO: consider doing something other than just removing the notification here
@@ -299,7 +299,7 @@ def notification_button_pressed(current_user):
     return ('', 204)
 
 @app.route("/test_authme")
-@cross_origin(origin=FRONTEND_DOMAIN, headers=SESSION_LOGIN_HEADERS)
+@cross_origin(origin=FRONTEND_URL_FULL, headers=SESSION_LOGIN_HEADERS)
 def test_authme():
     authorization_header = {"Authorization": "Bearer {}".format("your-bearer-token-here")}
     user = User("your-username-here", authorization_header)
@@ -317,7 +317,7 @@ def send_notification(user_id, text, type):
 
 @app.route("/openapi.json")
 def openapi():
-    print("openapi.json called to get");
+    print("openapi.json called to get")
     return send_from_directory('.', 'openapi.json')
 
 @app.route("/documentation")
