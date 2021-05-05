@@ -157,17 +157,22 @@
 	"/friends/add": {
 		"post": {
 			"summary": "Add another user as the user's friend (this is reciprocal).",
-			"parameters": [
-				{
-					"name": "friend_user_id",
-					"in": "query",
-					"description": "User ID of the friend to add",
-					"schema": {
-						"$ref": "#/components/schemas/UserId"
-					},
-					"required": true
+			"requestBody": {
+				"content": {
+					"application/json": {
+						"schema": {
+							"type": "object",
+							"properties": {
+								"friend_user_id": {
+									"description": "User ID of the friend to add",
+									"$ref": "#/components/schemas/UserId"
+								}
+							},
+							"required": [ "friend_user_id" ]
+						}
+					}
 				}
-			],
+			},
 			"responses": {
 				"204": {
 					"description": "The friend was either added successfully, or already exists.",
@@ -185,17 +190,22 @@
 	"/friends/remove": {
 		"post": {
 			"summary": "Remove another user from being this user's friend (this is reciprocal).",
-			"parameters": [
-				{
-					"name": "friend_user_id",
-					"in": "query",
-					"description": "User ID of the friend to remove",
-					"schema": {
-						"$ref": "#/components/schemas/UserId"
-					},
-					"required": true
+			"requestBody": {
+				"content": {
+					"application/json": {
+						"schema": {
+							"type": "object",
+							"properties": {
+								"friend_user_id": {
+									"description": "User ID of the friend to remove",
+									"$ref": "#/components/schemas/UserId"
+								}
+							},
+							"required": [ "friend_user_id" ]
+						}
+					}
 				}
-			],
+			},
 			"responses": {
 				"204": {
 					"description": "The friend was removed successfully.",
@@ -213,27 +223,27 @@
 	"/notification_button_pressed": {
 		"post": {
 			"summary": "Handle a notification button being pressed.",
-			"parameters": [
-				{
-					"name": "notification_id",
-					"in": "query",
-					"description": "ID of the notification a button was pressed for",
-					"schema": {
-						"type": "string"
-					},
-					"required": true
-				},
-				{
-					"name": "button",
-					"in": "query",
-					"description": "What button was pressed (currently ignored)",
-					"schema": {
-						"type": "string",
-						"example": "Dismiss"
-					},
-					"required": true
+			"requestBody": {
+				"content": {
+					"application/json": {
+						"schema": {
+							"type": "object",
+							"properties": {
+								"notification_id": {
+									"description": "ID of the notification a button was pressed for",
+									"type": "string"
+								},
+								"button": {
+									"description": "What button was pressed (currently ignored)",
+									"type": "string",
+									"example": "Dismiss"
+								}
+							},
+							"required": [ "notification_id", "button" ]
+						}
+					}
 				}
-			],
+			},
 			"responses": {
 				"204": {
 					"description": "A successful response.",
