@@ -44,8 +44,8 @@ export class AddFriend extends Component {
     componentDidMount() {
         axios.get(backend_url + "/getProfile")
             .then((response) => {
-                console.log(response.data);
-                this.setState({image: response.data.images[0].url});
+                console.log(response.data.user.images[0].url);
+                this.setState({image: response.data.user.images[0].url});
             })
             .catch((error) => {
                 console.log(error);

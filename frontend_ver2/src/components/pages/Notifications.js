@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { axios, backend_url } from '../../App.js';
 import './Notifications.css';
-
+import { Text, Linking } from 'react-native';
 
 
 
@@ -11,7 +11,7 @@ export class Notifications extends Component {
         super(props)
 
         this.state = {
-            notification: null,
+            notifications: [],
             user: "",
             friend: "",
             type: null
@@ -22,9 +22,10 @@ export class Notifications extends Component {
         axios.get(backend_url + "/notifications")
             .then((response) => {
                 console.log(response);
-                console.log(response.data[0].text);
-                this.setState({notification: response.data[0].text})
-                // console.log(response.headers.content-length);
+
+                this.setState({notifications: response.data.map((p) => p.text)})
+                this.setState({type: response.data.type.map((p) => p.text)})
+                console.log(response.data.type.map());
             })
             .catch((error) => {
                 console.log(error);
@@ -32,64 +33,74 @@ export class Notifications extends Component {
     }
 
     render() {
+        const { notifications } = this.state
+        const notification_list = []
+        for (let i = 0; i < this.state.notifications.length; i++) {
+            if (i %2 == 0) {
+                notification_list.push(
+                <li className='even-notif'>
+                <h2>
+                    {this.state.notifications[i]}
+                </h2>
+            </li> )
+            } else {
+            notification_list.push(
+                <li className='notif-item'>
+                    <h2>
+                        {this.state.notifications[i]}
+                    </h2>
+                </li>
+            )
+            }
+        }
 
 
-        
+
+
 
         return (
             <div>
             <header>
                <h1>BAD DJ ­-  Notifications</h1>
             </header>
-               <table>
+            <div class="notif-row">
+            <ul>
+            {notification_list}
+            </ul>
+            </div>
+               {/* <table>
                 <div class="notif-odd-row">
                     <tr>
-                        <td class="notif-info">{this.state.notification}</td>
-                        <td><a href="#"><div class="button-link">Accept</div></a></td>
-                        <td><a href="#"><div class="button-link">Reject</div></a></td>
-                    </tr>
-                </div>
-                <div class="notif-even-row">
-                    <tr>
-                        <td class="notif-info"></td>
+                        <td class="notif-info">{this.state.notifications[0]}</td>
                         <td><a href="#"><div class="button-link">View</div></a></td>
                         <td><a href="#"><div class="button-link">Ignore</div></a></td>
                     </tr>
                 </div>
-            </table>
+                <div class="notif-even-row">
+                    <tr>
+                        <td class="notif-info">{this.state.notifications[1]}</td>
+                        <td><a href="#"><div class="button-link">View</div></a></td>
+                        <td><a href="#"><div class="button-link">Ignore</div></a></td>
+                    </tr>
+                </div>
+                <div class="notif-odd-row">
+                    <tr>
+                        <td class="notif-info">{this.state.notifications[2]}</td>
+                        <td><a href="#"><div class="button-link">View</div></a></td>
+                        <td><a href="#"><div class="button-link">Ignore</div></a></td>
+                    </tr>
+                </div>
+                <div class="notif-even-row">
+                    <tr>
+                        <td class="notif-info">{this.state.notifications[3]}</td>
+                        <td><a href="#"><div class="button-link">View</div></a></td>
+                        <td><a href="#"><div class="button-link">Ignore</div></a></td>
+                    </tr>
+                </div>
+            </table> */}
             </div>
         );
     }
 }
 
 export default Notifications;
-
-
-// export default function Notifications() {
-//     return (
-//         <>
-//         <header>
-//             <h1>BAD DJ ­-  Notifications</h1>
-//         </header>
-//         <div class="main">
-            // <table>
-            //     <div class="notif-odd-row">
-            //         <tr>
-            //             <td class="notif-info">Adam has sent you a friend
-            //                     request.</td>
-            //             <td><a href="#"><div class="button-link">Accept</div></a></td>
-            //             <td><a href="#"><div class="button-link">Reject</div></a></td>
-            //         </tr>
-            //     </div>
-            //     <div class="notif-even-row">
-            //         <tr>
-            //             <td class="notif-info">Della has commented on your playlist.</td>
-            //             <td><a href="#"><div class="button-link">View</div></a></td>
-            //             <td><a href="#"><div class="button-link">Ignore</div></a></td>
-            //         </tr>
-            //     </div>
-            // </table>
-//         </div>
-//         </>
-//     );
-// }
