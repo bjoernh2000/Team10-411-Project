@@ -14,13 +14,14 @@
 	],
 	
 	"FRONTEND_URL": "http://localhost:3000",
-	"FRONTEND_DOMAIN": "localhost",
 
 	"BACKEND_URL": "http://localhost:8080",
 
 	"MONGODB_URL": "mongodb://localhost:27017/BadDJDatabase",
 	
-	"SPOTIFY_CLIENT_ID": "578597110fa642daaef83cd9c122d1d9"
+	"SPOTIFY_CLIENT_ID": "578597110fa642daaef83cd9c122d1d9",
+	
+	"LAST_FM_API_KEY": "d41650f725beec943aadd960d91f0160"
 	
 }
 

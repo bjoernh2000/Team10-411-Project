@@ -32,7 +32,6 @@ SESSION_WORKAROUND_HEADER_NAME = "X-Flask-Session-Workaround"
 # Service urls
 # Frontend:
 FRONTEND_URL_FULL = app_config["FRONTEND_URL"]
-FRONTEND_DOMAIN = app_config["FRONTEND_DOMAIN"]
 # Backend:
 BACKEND_URL_FULL = app_config["BACKEND_URL"]
 # Database: 
@@ -56,48 +55,16 @@ session_clone = dict(foo='bar')
 session_cookie_data = session_serializer.dumps(session_clone)
 
 
-CLIENT_ID = os.environ.get("CLIENT_ID")
-CLIENT_SECRET = os.environ.get("CLIENT_SECRET")
-
-AUTH_URL = 'https://accounts.spotify.com/api/token'
-REFRESH_URL = 'https://accounts.spotify.com/api/token'
-USER_ACCESS_URL = 'https://accounts.spotify.com/api/token'
-
-app.config["SESSION_COOKIE_HTTPONLY"] = False
-
-
 # ========================= OAUTH SETUP ====================================== #
 
-SPOTIFY_AUTH_URL = "https://accounts.spotify.com/authorize"
-SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token"
 SPOTIFY_API_BASE_URL = "https://api.spotify.com"
 API_VERSION = "v1"
 SPOTIFY_API_URL = "{}/{}".format(SPOTIFY_API_BASE_URL, API_VERSION)
-REDIRECT_URI = "/callback".format(BACKEND_URL_FULL)
-SCOPE = "playlist-modify-public playlist-modify-private"
-STATE = ""
-SHOW_DIALOG_bool = True
-SHOW_DIALOG_str = str(SHOW_DIALOG_bool).lower()
-auth_query_parameters = {
-    "response_type": "code",
-    "redirect_uri": REDIRECT_URI,
-    "scope": SCOPE,
-    # "state": STATE,
-    # "show_dialog": SHOW_DIALOG_str,
-    "client_id": CLIENT_ID
-}
 
-session_store = {}
-
-
-def isUnique(user_id):
-    user = mongo.db.users.find_one({"id":user_id})
-    if user:
-        return False
-    return True
-    
 
 # ================================= SESSION WORKAROUND =============================== #
+
+session_store = {}
 
 def login_workaround(request):
     session_identifier = request.headers.get(SESSION_WORKAROUND_HEADER_NAME)
@@ -123,66 +90,6 @@ def login_required(func):
 
 SESSION_LOGIN_HEADERS = ['Content-Type','content-type', 'Authorization', SESSION_WORKAROUND_HEADER_NAME]
 
-# ======================================== TOKENS ===================================== #
-
-def getAccessToken():
-    # POST
-    auth_response = requests.post(AUTH_URL, {
-        'grant_type': 'client_credentials',
-        'client_id': CLIENT_ID,
-        'client_secret': CLIENT_SECRET,
-    })
-
-    # convert the response to JSON
-    auth_response_data = auth_response.json()
-    # save the access token
-    access_token = auth_response_data['access_token']
-    refresh_token = None
-    if 'refresh_token' in auth_response_data.keys():
-        refresh_token = auth_response_data['refresh_token']
-    return {'access_token': access_token, 'refresh_token': refresh_token}
-
-@app.route('/spotifyAuthCallback', methods=['GET'])
-def handleSpotifyAuthCallback():
-    # TODO: Implement
-    auth_code = request.params['code']
-    access_response = requests.post(USER_ACCESS_URL, {
-        
-    })
-    return
-
-def getUserAccessToken():
-    # TODO: The user needs to be redirected to the spotify URL to authorize the application...
-    # TODO: Get access / refresh tokens from the auth token
-    return {'access_token': None, 'refresh_token': None}
-
-def refreshUserToken(tokens):
-    return refreshToken(tokens, getUserAccessToken)
-
-def refreshToken(tokens, getNewTokens=getAccessToken):
-    # First, check to see if we have a refresh token, if not we'll just get a new one the normal way
-    if tokens['refresh_token'] == None:
-        return getNewTokens()
-    # Request a refresh of the token
-    refresh_response = requests.post(REFRESH_URL, {
-        'grant_type': 'refresh_token',
-        'refresh_token': tokens['refresh_token'],
-        'client_id': CLIENT_ID,
-        'client_secret': CLIENT_SECRET
-    })
-    # Parse the data
-    refresh_response_data = refresh_response.json()
-    access_token = refresh_response_data['access_token']
-    refresh_token = None
-    if 'refresh_token' in refresh_response_data.keys():
-        refresh_token = refresh_response_data['refresh_token']
-    # And return it
-    return {'access_token':access_token,'refresh_token':refresh_token}
-
-# tokens = getAccessToken()
-# access_token = tokens['access_token']
-# refresh_token = tokens['refresh_token']
-# tokens = refreshToken(tokens)
 
 # ============================ OAUTH ================================= #
 @app.route("/callback", methods=["POST"])
@@ -399,6 +306,12 @@ def update_user_liked_music(user):
         mongo.db.liked_songs.insert(data)
     # And now update friend requests with the new information
     last_fm_similarity.getSimilarUsers(mongo, user, only_use_cached_data = False)
+    
+def isUnique(user_id):
+    user = mongo.db.users.find_one({"id":user_id})
+    if user:
+        return False
+    return True
 
 @app.route("/openapi.json")
 def openapi():
