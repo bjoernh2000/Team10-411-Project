@@ -44,13 +44,13 @@ export class Notifications extends Component {
 
 
     onAccept(notification_id) {
-		axios.post("/notification_button_pressed", {"button": "Accept", "notification_id": notification_id})
+		axios.post(backend_url + "/notification_button_pressed", {"button": "Accept", "notification_id": notification_id})
 	}
 	onReject(notification_id) {
-		axios.post("/notification_button_pressed", {"button": "Reject", "notification_id": notification_id})
+		axios.post(backend_url +"/notification_button_pressed", {"button": "Reject", "notification_id": notification_id})
 	}
 	onDismiss(notification_id) {
-		axios.post("/notification_button_pressed", {"button": "Dismiss", "notification_id": notification_id})
+		axios.post(backend_url + "/notification_button_pressed", {"button": "Dismiss", "notification_id": notification_id})
 	}
 
     componentDidMount() {
@@ -81,17 +81,14 @@ export class Notifications extends Component {
 
                 if (this.state.type[i] == "NOTIFICATION") {
                     notification_list.push(
-                        <a href="#"><div class="button-link" onClick={this.onAccept(this.state.notification_id[i])}>View</div></a>
-                    )
-                    notification_list.push(
-                        <a href="#"><div class="button-link" onClick={this.onReject(this.state.notification_id[i])}>Ignore</div></a>
+                        <a href="#"><div class="button-link" onClick={()=>{this.onDismiss(this.state.notification_id[i])}}>Ignore</div></a>
                     )
                 } else if (this.state.type[i]  == "FRIEND_REQUEST") {
                     notification_list.push(
-                        <a href="#"><div class="button-link" >Accept</div></a>
+                        <a href="#"><div class="button-link" onClick = {()=>{this.onAccept(this.state.notification_id[i])}} >Accept</div></a>
                     )
                     notification_list.push(
-                        <a href="#"><div class="button-link"onClick={this.onDismiss(this.state.notification_id[i])}>Reject</div></a>
+                        <a href="#"><div class="button-link"onClick={()=>{this.onReject(this.state.notification_id[i])}}>Reject</div></a>
                     )
                 }
                    
