@@ -1,5 +1,6 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS, cross_origin
+from flask_pymongo import PyMongo
 import requests
 import os
 from dotenv import load_dotenv
@@ -9,6 +10,9 @@ load_dotenv()
 app = Flask(__name__)
 cors = CORS(app, resources={r"/endpoint": {"origins": "*"}})
 app.config['CORS_HEADERS'] = 'Content-Type'
+
+app.config["MONGO_URI"] = "mongodb://localhost:27017/BadDJDatabase"
+mongo = PyMongo(app)
 
 CLIENT_ID = os.environ.get("CLIENT_ID")
 CLIENT_SECRET = os.environ.get("CLIENT_SECRET")

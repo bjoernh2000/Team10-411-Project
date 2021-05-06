@@ -1,0 +1,69 @@
+body {
+    background-color: #282c34;
+    color: white;
+    padding: 0 2em;
+}
+
+header {
+    color: white;
+    text-align: center;
+    font-family: "Courier New", Courier, monospace;
+    margin: 2em 0;
+}
+
+.notif-row {
+    font-size: 1.5rem;
+    padding-top: 1.5rem;
+    margin-left: 2rem;
+    padding-bottom: 2rem;
+}
+
+.even-notif {
+    background-color: #53565d;
+    font-size: 1.3rem;
+    padding-top: 30px;
+    padding-left: 30px;
+    padding-bottom: 30px;
+    margin-left: 2rem;
+    cursor: pointer;
+}
+
+
+.notif-item {
+    font-size: 1.3rem;
+    padding-top: 30px;
+    padding-left: 30px;
+    padding-bottom: 30px;
+    margin-left: 2rem;
+    cursor: pointer;
+}
+
+table {
+    width: 100%;
+}
+
+td {
+    font-size: 1.5em;
+    column-width: 50%;
+    padding: 0.5em 1em;
+}
+
+.notif-info {
+    width: 100%;
+    white-space: nowrap;
+}
+
+.button-link {
+    min-width: 3em;
+    text-align: center;
+    color: white;
+    display: table-cell;
+    padding: 0.5em;
+    background-color: #fc6e20;
+    border: 2px solid #fc6e20;
+    border-radius: 5px;
+}
+
+.button-link:hover {
+    background-color: #9a5a06;
+}
