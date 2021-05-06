@@ -332,9 +332,9 @@ def remove_friend(current_user):
 @cross_origin(origin=FRONTEND_URL_FULL, headers=SESSION_LOGIN_HEADERS)
 @login_required
 def notification_button_pressed(current_user):
-    button = request.args["button"]
+    button = request.get_json().get("button")
     print("")
-    notification_id = request.args["notification_id"]
+    notification_id = request.get_json().get("notification_id")
     user_id = current_user.user_id
     print("Pressed button was '{}' notificaiton id '{}'".format(button, notification_id))
     if button == "Accept":
