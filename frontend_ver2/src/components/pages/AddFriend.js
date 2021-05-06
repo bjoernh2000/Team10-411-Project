@@ -12,15 +12,6 @@ export class AddFriend extends Component {
         };
     }
 
-    // @app.route("/friends/add")
-    // @cross_origin(origin=FRONTEND_DOMAIN, headers=SESSION_LOGIN_HEADERS)
-    // @login_required
-    // def add_friend(current_user):
-    //     user_id = current_user.user_id
-    //     friend_user_id = request.args["friend_user_id"]
-    //     mongo.db.friends.insert({"user_id": user_id, "friend_user_id": friend_user_id})
-    //     return ('', 204)
-
     sendFriendRequest = e => {
         e.preventDefault()
         console.log(this.state)

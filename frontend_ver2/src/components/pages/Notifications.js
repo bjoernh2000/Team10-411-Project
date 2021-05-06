@@ -12,48 +12,78 @@ export class Notifications extends Component {
 
         this.state = {
             notifications: [],
-            user: "",
-            friend: "",
-            type: null
+            type: [],
+            songURL: ""
         }
     }
 
+    // viewNotification() {
+    //     axios.post(backend_url + '/notification_button_pressed',
+    //     (
+    //         notification_id: {this.state.notification_id[0]}
+    //         button: 
+    //     )
+    //       .then((response) => {
+    //         console.log(response);
+    //       }).catch((error) => {
+    //         console.log(error);
+    //       });
+    // }
+
+    // shareSong = e => {
+    //     e.preventDefault()
+    //     console.log(this.state)
+    //     axios.post(backend_url + "/share_music", {"song_name":this.state.songID}, {headers: {'Content-Type': 'application/json'}}, {withCredentials: true})
+    //     .then(response => {
+    //         console.log(response)
+    //     })
+    //     .catch(error => {
+    //         console.log(error)
+    //     })
+    // }
+
     componentDidMount() {
         axios.get(backend_url + "/notifications")
-            .then((response) => {
-                console.log(response);
-
+            .then((response) => { 
+                console.log(response)               
                 this.setState({notifications: response.data.map((p) => p.text)})
-                this.setState({type: response.data.type.map((p) => p.text)})
-                console.log(response.data.type.map());
+                this.setState({type: response.data.map((p) => p.type)})
             })
             .catch((error) => {
                 console.log(error);
             })
     }
 
+
     render() {
         const { notifications } = this.state
         const notification_list = []
         for (let i = 0; i < this.state.notifications.length; i++) {
-            if (i %2 == 0) {
+            
                 notification_list.push(
-                <li className='even-notif'>
-                <h2>
-                    {this.state.notifications[i]}
-                </h2>
-            </li> )
-            } else {
-            notification_list.push(
-                <li className='notif-item'>
+                    <li className={i%2==0?'even-notif':'notif-item'}>
                     <h2>
                         {this.state.notifications[i]}
                     </h2>
-                </li>
-            )
-            }
-        }
+                </li> )
 
+                // if (this.state.type[i] == "NOTIFICATION") {
+                //     notification_list.push(
+                //         <a href="#"><div class="button-link" onClick={this.shareSong} >View</div></a>
+                //     )
+                //     notification_list.push(
+                //         <a href="#"><div class="button-link">Ignore</div></a>
+                //     )
+                // } else if (this.state.type[i]  == "FRIEND_REQUEST") {
+                //     notification_list.push(
+                //         <a href="#"><div class="button-link">Accept</div></a>
+                //     )
+                //     notification_list.push(
+                //         <a href="#"><div class="button-link">Reject</div></a>
+                //     )
+                // }
+                   
+        } 
 
 
 
@@ -64,41 +94,45 @@ export class Notifications extends Component {
                <h1>BAD DJ ­-  Notifications</h1>
             </header>
             <div class="notif-row">
+                <table>
             <ul>
-            {notification_list}
+            {notification_list} 
+            {/* {notification_type_list} */}
             </ul>
+            </table>
             </div>
                {/* <table>
                 <div class="notif-odd-row">
                     <tr>
-                        <td class="notif-info">{this.state.notifications[0]}</td>
-                        <td><a href="#"><div class="button-link">View</div></a></td>
-                        <td><a href="#"><div class="button-link">Ignore</div></a></td>
+                        <td class="notif-info">{this.state.notifications[0]}
+                        <a href="#"><div class="button-link">View</div></a>
+                        <a href="#"><div class="button-link">Ignore</div></a>
                     </tr>
                 </div>
                 <div class="notif-even-row">
                     <tr>
-                        <td class="notif-info">{this.state.notifications[1]}</td>
-                        <td><a href="#"><div class="button-link">View</div></a></td>
-                        <td><a href="#"><div class="button-link">Ignore</div></a></td>
+                        <td class="notif-info">{this.state.notifications[1]}
+                        <a href="#"><div class="button-link">View</div></a>
+                        <a href="#"><div class="button-link">Ignore</div></a>
                     </tr>
                 </div>
                 <div class="notif-odd-row">
                     <tr>
-                        <td class="notif-info">{this.state.notifications[2]}</td>
-                        <td><a href="#"><div class="button-link">View</div></a></td>
-                        <td><a href="#"><div class="button-link">Ignore</div></a></td>
+                        <td class="notif-info">{this.state.notifications[2]}
+                        <a href="#"><div class="button-link">View</div></a>
+                        <a href="#"><div class="button-link">Ignore</div></a>
                     </tr>
                 </div>
                 <div class="notif-even-row">
                     <tr>
-                        <td class="notif-info">{this.state.notifications[3]}</td>
-                        <td><a href="#"><div class="button-link">View</div></a></td>
-                        <td><a href="#"><div class="button-link">Ignore</div></a></td>
+                        <td class="notif-info">{this.state.notifications[3]}
+                        <a href="#"><div class="button-link">View</div></a>
+                        <a href="#"><div class="button-link">Ignore</div></a>
                     </tr>
                 </div>
             </table> */}
             </div>
+            
         );
     }
 }
