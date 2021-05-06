@@ -1,5 +1,14 @@
 # 411 Project: Music Sharing Platform ­— BadDJ
 
+## Members
+* Bernard Mulaw
+* Bjoern Hasemann
+* Adam Clay
+* Andrew Chung
+* Della Lin
+* Jared Whitney
+
+## About
 This is a music sharing space which users log into with Spotify.
 
 Every person on this platform has some playlist that represents them on their
@@ -15,16 +24,26 @@ gather data about popular artists as it applies to people in general. The two
 APIs work together in order to understand general trends in music taste, as
 well as personal (single user) preferences.
 
+## Notes
+* Note that some functions may take a moment to load in. These include:
+    * Friend recommendations. Remain on the Profile page while they load
+    * Displaying notifications. Refreshing the page will update the visible list
+    * Showing the song feed (Home tab) requires refreshes
+* Documentation for the backend API can be found at `localhost:8080/documentation` once the
+  backend server is running
+
 ## How to Run
 
 In order to run BadDJ:
-1. Install dependency programs
+1. In `frontend/src/`, populate the `config.json` file with a Spotify client
+   ID and client secret as well as a Last.fm client ID and client secret
+2. Install dependency programs
     * MongoDB
     * `npm`
-2. `cd` into `flask_backend` and run `python app.py` for the backend server
-3. In a second terminal,
+3. `cd` into `flask_backend` and run `python app.py` for the backend server
+4. In a second terminal,
     * `cd` into `frontend_ver2`
     * Run `npm install` to grab all `npm` dependencies 
     * `npm start` the frontend server
-4. In a third terminal, start MongoDB with `mongod --dbpath <database_path>`
-5. Open a web browser and navigate to `localhost:3000`
+5. In a third terminal, start MongoDB with `mongod --dbpath <database_path>`
+6. Open a web browser and navigate to `localhost:3000`
