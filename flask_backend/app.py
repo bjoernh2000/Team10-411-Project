@@ -213,6 +213,7 @@ def callbackv2():
     if isUnique(profile_data["id"]):
         user_db_id = mongo.db.users.insert(profile_data)
         data = {"id":profile_data["id"], "playlists":playlist_data["items"]}
+        mongo.db.playlists.insert(data)
     else:
         # Update user's playlists when they log in
         data = {"id":profile_data["id"], "playlists":playlist_data["items"]}

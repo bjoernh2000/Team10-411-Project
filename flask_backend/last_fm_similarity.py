@@ -194,6 +194,7 @@ def getUserSongs(mongo, user_id, authorization_header, only_use_cached_data, all
                 print("  found liked song {} - {}".format(item['track']['name'], item['track']['artists'][0]['name']))
     
     print("get playlist songs for {}".format(user_id))
+
     playlists_urls = list(mongo.db.playlists.aggregate([
         {
             "$match": {
@@ -217,7 +218,12 @@ def getUserSongs(mongo, user_id, authorization_header, only_use_cached_data, all
                 "_id": 0
             }
         }
-    ]))[0]['playlists']
+    ]))
+
+    if (len(playlists_urls) == 0):
+        return songs
+    else:
+        playlists_urls = playlists_urls[0]['playlists']
     
     for playlist_url in playlists_urls:
     
