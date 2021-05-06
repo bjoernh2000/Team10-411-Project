@@ -1,5 +1,7 @@
 # 411 Project: Music Sharing Platform ­— BadDJ
 
+![BadDJ Logo](baddj_logo.jpg)
+
 ## Members
 * Bernard Mulaw
 * Bjoern Hasemann
