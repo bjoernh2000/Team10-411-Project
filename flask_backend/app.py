@@ -269,7 +269,7 @@ def share_music(current_user):
     send_notification(user_id, "You shared {}!".format(song["name"]), "NOTIFICATION")
     friends = get_user_friends(user_id)
     for friend in friends:
-        send_notification(user_id, "Your friend {0} shared {1}!".format(user_id,song["name"]), "NOTIFICATION")
+        send_notification(friend, "Your friend {0} shared {1}!".format(user_id,song["name"]), "NOTIFICATION")
     mongo.db.sharing.insert({"user_id": user_id, "song":song, "timestamp": (time.time_ns() // 1_000_000)})
     return jsonify(songs)
 
