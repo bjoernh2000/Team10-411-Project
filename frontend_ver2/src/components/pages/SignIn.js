@@ -9,7 +9,7 @@ function SignIn() {
             <SpotifyAuth
                             redirectUri= {`${frontend_url}/callback`}
                             clientID={spotify_client_id}
-                            scopes={[Scopes.userReadPrivate, Scopes.userReadEmail]}
+                            scopes={[Scopes.userReadPrivate, Scopes.userReadEmail, Scopes.playlistReadPrivate, Scopes.userLibraryRead]}
                         />
         </div>
     )

@@ -75,6 +75,38 @@
 			}
 		}
 	},
+	"/music_feed": {
+		"get": {
+			"summary": "Get a list of shared songs that should be visible to this user.",
+			"responses": {
+				"200": {
+					"description": "A successful response",
+					"content": {
+						"application/json": {
+							"schema": {
+								"description": "A list of shared songs, ordered from most recent to least recent.",
+								"type": "array",
+								"items": {
+									"type": "object",
+									"properties": {
+										"user_id": { "type": "string" },
+										"timestamp": { "type": "integer" },
+										"song": { "$ref": "#/components/schemas/Song" }
+									}
+								}
+							}
+						}
+					}
+				},
+				"401": {
+					"$ref": "#/components/responses/Unauthorized"
+				},
+				"500": {
+					"$ref": "#/components/responses/InternalServerError"
+				}
+			}
+		}
+	},
 	"/notifications": {
 		"get": {
 			"summary": "Get a list containing the user's pending notifications.",
@@ -157,17 +189,22 @@
 	"/friends/add": {
 		"post": {
 			"summary": "Add another user as the user's friend (this is reciprocal).",
-			"parameters": [
-				{
-					"name": "friend_user_id",
-					"in": "query",
-					"description": "User ID of the friend to add",
-					"schema": {
-						"$ref": "#/components/schemas/UserId"
-					},
-					"required": true
+			"requestBody": {
+				"content": {
+					"application/json": {
+						"schema": {
+							"type": "object",
+							"properties": {
+								"friend_user_id": {
+									"description": "User ID of the friend to add",
+									"$ref": "#/components/schemas/UserId"
+								}
+							},
+							"required": [ "friend_user_id" ]
+						}
+					}
 				}
-			],
+			},
 			"responses": {
 				"204": {
 					"description": "The friend was either added successfully, or already exists.",
@@ -185,17 +222,22 @@
 	"/friends/remove": {
 		"post": {
 			"summary": "Remove another user from being this user's friend (this is reciprocal).",
-			"parameters": [
-				{
-					"name": "friend_user_id",
-					"in": "query",
-					"description": "User ID of the friend to remove",
-					"schema": {
-						"$ref": "#/components/schemas/UserId"
-					},
-					"required": true
+			"requestBody": {
+				"content": {
+					"application/json": {
+						"schema": {
+							"type": "object",
+							"properties": {
+								"friend_user_id": {
+									"description": "User ID of the friend to remove",
+									"$ref": "#/components/schemas/UserId"
+								}
+							},
+							"required": [ "friend_user_id" ]
+						}
+					}
 				}
-			],
+			},
 			"responses": {
 				"204": {
 					"description": "The friend was removed successfully.",
@@ -213,31 +255,70 @@
 	"/notification_button_pressed": {
 		"post": {
 			"summary": "Handle a notification button being pressed.",
-			"parameters": [
-				{
-					"name": "notification_id",
-					"in": "query",
-					"description": "ID of the notification a button was pressed for",
-					"schema": {
-						"type": "string"
-					},
-					"required": true
-				},
-				{
-					"name": "button",
-					"in": "query",
-					"description": "What button was pressed (currently ignored)",
-					"schema": {
-						"type": "string",
-						"example": "Dismiss"
-					},
-					"required": true
+			"requestBody": {
+				"content": {
+					"application/json": {
+						"schema": {
+							"type": "object",
+							"properties": {
+								"notification_id": {
+									"description": "ID of the notification a button was pressed for",
+									"type": "string"
+								},
+								"button": {
+									"description": "What button was pressed (currently ignored)",
+									"type": "string",
+									"example": "Dismiss"
+								}
+							},
+							"required": [ "notification_id", "button" ]
+						}
+					}
 				}
-			],
+			},
 			"responses": {
 				"204": {
 					"description": "A successful response.",
 					"content": {}
+				},
+				"401": {
+					"$ref": "#/components/responses/Unauthorized"
+				},
+				"500": {
+					"$ref": "#/components/responses/InternalServerError"
+				}
+			}
+		}
+	},
+	"/share_music": {
+		"post": {
+			"summary": "Share a song with a user's friends (posts to their music feed)",
+			"requestBody": {
+				"content": {
+					"application/json": {
+						"schema": {
+							"type": "object",
+							"properties": {
+								"song_name": {
+									"description": "Song to share (can be mixed song/artist, used as a search query)",
+									"type": "string"
+								}
+							},
+							"required": [ "song_name" ]
+						}
+					}
+				}
+			},
+			"responses": {
+				"200": {
+					"description": "A successful response.",
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/Song"
+							}
+						}
+					}
 				},
 				"401": {
 					"$ref": "#/components/responses/Unauthorized"
@@ -373,6 +454,119 @@
 				"user_id",
 				"similarity_score"
 			]
+		},
+		"Song": {
+			"type": "object",
+			"description": "A song object as returned by Spotify's API",
+			"properties": {
+				"album": {
+					"type": "object",
+					"properties": {}
+				},
+				"artists": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"properties": {
+							"external_urls": {
+								"type": "object",
+								"properties": {}
+							},
+							"followers": {
+								"type": "object",
+								"properties": {}
+							},
+							"genres": {
+								"type": "array",
+								"items": { "type": "string" }
+							},
+							"href": {
+								"type": "string"
+							},
+							"id": {
+								"type": "string"
+							},
+							"images": {
+								"type": "array",
+								"items": {
+									"type": "object",
+									"properties": {}
+								}
+							},
+							"name": {
+								"type": "string"
+							},
+							"populatity": {
+								"type": "integer"
+							},
+							"type": {
+								"type": "string"
+							},
+							"uri": {
+								"type": "string"
+							}
+						}
+					}
+				},
+				"available_markets": {
+					"type": "array",
+					"items": {
+						"type": "string"
+					}
+				},
+				"disc_number": {
+					"type": "integer"
+				},
+				"duration_ms": {
+					"type": "integer"
+				},
+				"explicit": {
+					"type": "boolean"
+				},
+				"external_ids": {
+					"type": "object",
+					"properties": {}
+				},
+				"external_urls": {
+					"type": "object",
+					"properties": {}
+				},
+				"href": {
+					"type": "string"
+				},
+				"id": {
+					"type": "string"
+				},
+				"is_local": {
+					"type": "boolean"
+				},
+				"is_playable": {
+					"type": "boolean"
+				},
+				"name": {
+					"type": "string"
+				},
+				"populatity": {
+					"type": "integer"
+				},
+				"preview_url": {
+					"type": "string"
+				},
+				"restrictions": {
+					"type": "object",
+					"properties": {}
+				},
+				"track_number": {
+					"type": "integer"
+				},
+				"type": {
+					"type": "string"
+				},
+				"uri": {
+					"type": "string"
+				}
+			},
+			"example": {}
 		}
 	  },
 	  "responses": {

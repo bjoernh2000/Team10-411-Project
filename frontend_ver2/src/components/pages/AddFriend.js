@@ -28,7 +28,7 @@ export class AddFriend extends Component {
         // var current_user = {
         //     "user_id": user_id
         // }
-        axios.post(url, this.state.friendName)
+        axios.post(url, {"friend_user_id": this.state.friendName})
         .then(response => {
             console.log(response)
         })
@@ -38,14 +38,14 @@ export class AddFriend extends Component {
     }
 
     onChangeText = e => {
-        this.setState({[e.target.name]: e.target.value})
+        this.setState({friendName: e.target.value})
     }
 
     componentDidMount() {
         axios.get(backend_url + "/getProfile")
             .then((response) => {
-                console.log(response.data);
-                this.setState({image: response.data.images[0].url});
+                console.log(response.data.user.images[0].url);
+                this.setState({image: response.data.user.images[0].url});
             })
             .catch((error) => {
                 console.log(error);
