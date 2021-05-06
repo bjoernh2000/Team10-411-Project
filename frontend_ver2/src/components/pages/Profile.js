@@ -1,7 +1,6 @@
 import React, { Component } from 'react';
 import './Profile.css';
 import { axios, backend_url } from '../../App.js';
-import Cookies from 'js-cookie';
 import { Text, Linking } from 'react-native';
 
 export class Profile extends Component {
@@ -16,7 +15,8 @@ export class Profile extends Component {
             country: null,
             current_user: null,
             playlists: [],
-            playlist_link: []
+            playlist_link: [],
+            recommended_friends: []
         }
     }
 
@@ -39,11 +39,19 @@ export class Profile extends Component {
             .catch((error) => {
                 console.log(error);
             })
+        
+        axios.get(backend_url + "/friends/recommendations")
+            .then((response1) => {
+                console.log(response1.data);
+                /*console.log(response.data.user_id)*/
+                this.setState({recommended_friends: response1.data.map((friend) => friend["user_id"])})
+            })
+            .catch((error) => {
+                console.log(error);
+            })
     }
 
     render() {
-        const { name } = this.state
-
         const playlists_and_links = []
         for (let i = 0; i < this.state.playlists.length; i++) {
             playlists_and_links.push(
@@ -81,12 +89,26 @@ export class Profile extends Component {
                 <div className='bottom-container'>
                     <div className='main-playlist'>
                         <h4>
-                            {this.state.name}'s Playlist
+                            {this.state.name}'s Playlists
                         </h4>
                         <div className='songs'>
                             <ol>
                                 {playlists_and_links}
                             </ol>
+                        </div>
+                    </div>
+                    <div className='main-playlist'>
+                        <h4>
+                            Friend Recommendations 
+                        </h4>
+                        <div className='songs'>
+                        <ol>
+                            {this.state.recommended_friends.map((friend)=>
+                                <li className='song-item'>
+                                    &nbsp;&nbsp;&nbsp;&nbsp;{friend}                
+                                </li>
+                            )}
+                        </ol>
                         </div>
                     </div>
                 </div>
