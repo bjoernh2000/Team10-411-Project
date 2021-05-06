@@ -60,6 +60,7 @@ export class TweetBox extends Component {
             .then((response) => {
                 console.log(response);
                 this.setState({song_names: response.data.map((s) => s.song.name)});
+                this.setState({song_urls: response.data.map((s) => s.song.external_urls.spotify)});
                 console.log(this.state.song_names)
             })
             .catch((error) => {
@@ -74,7 +75,8 @@ export class TweetBox extends Component {
         for (let i = 0; i < this.state.song_names.length; i++) {
             display_s_names.push(
                 <div className = 'song-item'>
-                    <Text style={{color: 'white', fontSize: 25}}>
+                    <Text style={{color: 'white', fontSize: 25}}
+                        onPress={() => Linking.openURL(this.state.song_urls[i])}>
                         &nbsp;&nbsp;&nbsp;&nbsp; {this.state.song_names[i]}
                     </Text>
                 </div>
