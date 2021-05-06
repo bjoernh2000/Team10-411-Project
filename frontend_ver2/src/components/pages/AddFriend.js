@@ -28,7 +28,7 @@ export class AddFriend extends Component {
         // var current_user = {
         //     "user_id": user_id
         // }
-        axios.post(url, this.state.friendName)
+        axios.post(url, {"friend_user_id": this.state.friendName})
         .then(response => {
             console.log(response)
         })
@@ -38,7 +38,7 @@ export class AddFriend extends Component {
     }
 
     onChangeText = e => {
-        this.setState({[e.target.name]: e.target.value})
+        this.setState({friendName: e.target.value})
     }
 
     componentDidMount() {
