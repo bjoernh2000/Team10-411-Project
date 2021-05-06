@@ -2,7 +2,7 @@ import React, {Component} from 'react';
 import './TweetBox.css';
 import {Avatar, Button} from "@material-ui/core";
 import { axios, backend_url } from '../../App.js';
-
+import { Text, Linking } from 'react-native';
 
 export class TweetBox extends Component {
 
@@ -11,7 +11,8 @@ export class TweetBox extends Component {
 
         this.state = {
             songID: "",
-            image: null
+            image: null,
+            song_names: []
         }
     }
 
@@ -39,6 +40,7 @@ export class TweetBox extends Component {
         })
     }
 
+
     onChangeText = e => {
         this.setState({[e.target.name]: e.target.value})
     }
@@ -47,7 +49,18 @@ export class TweetBox extends Component {
         axios.get(backend_url + "/getProfile")
             .then((response) => {
                 console.log(response.data.user.images[0].url);
-                this.setState({image: response.data.user.images[0].url});
+                this.setState({image: response.data.user.images[0].url})
+                this.setState({songs: response.data.song});
+            })
+            .catch((error) => {
+                console.log(error);
+            })
+
+        axios.get(backend_url + "/music_feed")
+            .then((response) => {
+                console.log(response);
+                this.setState({song_names: response.data.map((s) => s.song.name)});
+                console.log(this.state.song_names)
             })
             .catch((error) => {
                 console.log(error);
@@ -55,7 +68,19 @@ export class TweetBox extends Component {
     }
 
     render() {
-        const { songID } = this.state
+        const { songID } = this.state.songID
+
+        const display_s_names = []
+        for (let i = 0; i < this.state.song_names.length; i++) {
+            display_s_names.push(
+                <div className = 'song-item'>
+                    <Text style={{color: 'white', fontSize: 25}}>
+                        &nbsp;&nbsp;&nbsp;&nbsp; {this.state.song_names[i]}
+                    </Text>
+                </div>
+            )
+        }
+
         return (
             <div>
                 
@@ -71,6 +96,12 @@ export class TweetBox extends Component {
                         <Button className = "tweetBox__tweetButton" onClick={this.shareSong}>
                             Share
                         </Button>
+                    </div>
+
+                    <div className = "display__feed">
+                        <ol>
+                            {display_s_names}
+                        </ol>
                     </div>
                 </form> 
             </div>

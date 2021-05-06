@@ -22,7 +22,9 @@ export class Feed extends Component {
             .catch((error) => {
                 console.log(error);
             })
+        
     }
+
     render() {
         return (
             <div className = "feed">
@@ -32,7 +34,7 @@ export class Feed extends Component {
                 </h2>
 
                 <TweetBox />
-            
+
 
                 </div>
             </div>
