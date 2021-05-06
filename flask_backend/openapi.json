@@ -188,7 +188,7 @@
 	},
 	"/friends/add": {
 		"post": {
-			"summary": "Add another user as the user's friend (this is reciprocal).",
+			"summary": "Add another user as the user's friend (send a friend request).",
 			"requestBody": {
 				"content": {
 					"application/json": {
