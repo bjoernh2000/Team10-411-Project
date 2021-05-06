@@ -18,7 +18,7 @@ import requests
 import random
 import json
 
-app_config = json.load(open('../frontend_ver2/src/config.json',))
+app_config = json.load(open('../frontend/src/config.json',))
 LAST_FM_API_KEY = app_config["LAST_FM_API_KEY"]
 
 SIMILAR_TRACKS_URL = 'http://ws.audioscrobbler.com/2.0/?method=track.getsimilar&artist={1}&track={0}&api_key={2}&autocorrect=1&limit=3&format=json'

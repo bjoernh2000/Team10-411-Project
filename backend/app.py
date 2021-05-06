@@ -24,7 +24,7 @@ load_dotenv()
 
 app = Flask(__name__)
 
-app_config = json.load(open('../frontend_ver2/src/config.json',))
+app_config = json.load(open('../frontend/src/config.json',))
 
 # If you change this, you'll also need to update it in the frontend code (fair warning!)
 SESSION_WORKAROUND_HEADER_NAME = "X-Flask-Session-Workaround"
