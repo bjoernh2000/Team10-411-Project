@@ -42,9 +42,9 @@ In order to run BadDJ:
 2. Install dependency programs
     * MongoDB
     * `npm`
-3. `cd` into `flask_backend` and run `python app.py` for the backend server
+3. `cd` into `backend` and run `python app.py` for the backend server
 4. In a second terminal,
-    * `cd` into `frontend_ver2`
+    * `cd` into `frontend`
     * Run `npm install` to grab all `npm` dependencies 
     * `npm start` the frontend server
 5. In a third terminal, start MongoDB with `mongod --dbpath <database_path>`
